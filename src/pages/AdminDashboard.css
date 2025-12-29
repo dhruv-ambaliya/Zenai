@@ -1,0 +1,26 @@
+.admin-dashboard {
+    min-height: 100vh;
+    background: #f5f6fa;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-content {
+    flex: 1;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-content {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-content {
+        padding: 10px;
+    }
+}

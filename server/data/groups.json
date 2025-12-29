@@ -1,0 +1,40 @@
+[
+  {
+    "name": "Test 1",
+    "subgroups": [
+      {
+        "name": "sub gp 1",
+        "subgroups": [
+          {
+            "name": "sub sub gp 1",
+            "subgroups": [],
+            "id": "S2GP-001-001-001"
+          },
+          {
+            "name": "sub sub gp 2",
+            "subgroups": [],
+            "id": "S2GP-001-001-002"
+          }
+        ],
+        "id": "S1GP-001-001"
+      },
+      {
+        "name": "sub gp 2",
+        "subgroups": [],
+        "id": "S1GP-001-002"
+      }
+    ],
+    "id": "GP-001"
+  },
+  {
+    "name": "Test 2",
+    "subgroups": [
+      {
+        "name": "sub test 2",
+        "subgroups": [],
+        "id": "S1GP-002-001"
+      }
+    ],
+    "id": "GP-002"
+  }
+]

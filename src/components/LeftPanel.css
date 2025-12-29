@@ -1,0 +1,269 @@
+.left-panel {
+    width: 280px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    position: sticky;
+    top: 80px;
+}
+
+.panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+.panel-title h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.collapse-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: #3498db;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    transition: transform 0.3s;
+}
+
+.collapse-btn:hover {
+    transform: scale(1.1);
+}
+
+.left-panel.collapsed {
+    max-height: 60px;
+    overflow: hidden;
+}
+
+.panel-content {
+    display: block;
+}
+
+.add-group-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.add-group-btn:hover {
+    background: #2980b9;
+}
+
+.add-group-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.add-group-form input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.add-group-form button {
+    padding: 8px 16px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 4px;
+}
+
+.group-header:hover {
+    background: #f8f9fa;
+}
+
+.group-header.active {
+    background: #3498db;
+    color: white;
+}
+
+.group-header.all-items {
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.expand-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    padding: 0;
+}
+
+.group-name {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.item-count {
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.delete-group-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.group-header.active .delete-group-btn {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+.group-header.active .item-count {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.add-subgroup-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: inherit;
+    transition: all 0.3s;
+}
+
+.add-subgroup-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.group-header.active .add-subgroup-btn {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.group-header.active .add-subgroup-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.subgroup-form {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.subgroup-form input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.subgroup-form button {
+    padding: 6px 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.groups-list {
+    margin-top: 10px;
+}
+
+.group-item {
+    margin-bottom: 2px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .left-panel {
+        width: 100%;
+        max-height: none;
+        position: static;
+        margin-bottom: 20px;
+    }
+    
+    .collapse-btn.mobile-only {
+        display: block;
+    }
+    
+    .left-panel.collapsed {
+        margin-bottom: 10px;
+        max-height: 60px;
+        overflow: hidden;
+    }
+    
+    .left-panel.collapsed .panel-title {
+        border-bottom: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .left-panel {
+        padding: 15px;
+    }
+
+    .panel-title h3 {
+        font-size: 1rem;
+    }
+    
+    .left-panel.collapsed {
+        padding: 10px 15px;
+    }
+}

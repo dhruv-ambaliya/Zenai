@@ -1,0 +1,54 @@
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+#root {
+  height: 100vh;
+}
+
+/* Global Form Grid Styles */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+/* Global Modal Responsive */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .modal-content {
+    width: 95% !important;
+    max-height: 90vh !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 100% !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+  }
+}

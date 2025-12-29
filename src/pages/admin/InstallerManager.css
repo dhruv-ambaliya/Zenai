@@ -1,0 +1,191 @@
+.installer-manager {
+    width: 100%;
+}
+
+.installers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.installer-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+}
+
+.installer-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.installer-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.installer-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.installer-id {
+    font-size: 0.75rem;
+    color: #7f8c8d;
+    margin: 0;
+    font-family: monospace;
+}
+
+.installer-id-label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin: -10px 0 15px 0;
+    font-family: monospace;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.9rem;
+}
+
+.info-row .label {
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.info-row span:last-child {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ecf0f1;
+}
+
+.card-actions .icon-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.card-actions .icon-btn.edit {
+    background: #3498db20;
+    color: #3498db;
+}
+
+.card-actions .icon-btn.edit:hover {
+    background: #3498db;
+    color: white;
+}
+
+.card-actions .icon-btn.delete {
+    background: #e74c3c20;
+    color: #e74c3c;
+}
+
+.card-actions .icon-btn.delete:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Form */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-group input {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .installer-manager {
+        padding: 15px;
+    }
+    
+    .installers-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .installer-manager {
+        padding: 10px;
+    }
+    
+    .installer-card {
+        padding: 12px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.4em;
+    }
+}

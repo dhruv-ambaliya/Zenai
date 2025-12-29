@@ -1,0 +1,40 @@
+[
+  {
+    "id": "ADMIN-001",
+    "name": "Super Admin",
+    "role": "admin",
+    "username": "admin",
+    "password": "adminpassword123",
+    "phone": "9998887777"
+  },
+  {
+    "id": "INST-001",
+    "name": "Mahesh Mer",
+    "role": "installer",
+    "username": "mahesh01",
+    "password": "Mahesh123",
+    "phone": "0239488474",
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-24T07:00:51.498Z"
+  },
+  {
+    "id": "INST-002",
+    "name": "Ramesh Sen",
+    "role": "installer",
+    "username": "ramesh01",
+    "password": "Ramesh123",
+    "phone": "9274748944",
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-24T07:02:18.680Z"
+  },
+  {
+    "id": "INST-003",
+    "name": "Chaman chen",
+    "role": "installer",
+    "username": "chaman01",
+    "password": "Chaman123",
+    "phone": "8723687344",
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-25T11:29:49.901Z"
+  }
+]
