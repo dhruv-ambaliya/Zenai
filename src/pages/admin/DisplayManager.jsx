@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiSearch, FiFolderPlus, FiMapPin } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiSearch, FiFolderPlus, FiMapPin, FiGrid, FiList, FiMoreVertical } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import LeftPanel from '../../components/LeftPanel';
@@ -20,17 +20,26 @@ function DisplayManager() {
     const [currentDisplay, setCurrentDisplay] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [galleryPhotoIndex, setGalleryPhotoIndex] = useState(0); // For details modal gallery
 
     // Search & filter
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortBy, setSortBy] = useState('date');
+    const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
+    const [openMenu, setOpenMenu] = useState(null); // Track which display's menu is open
 
     // Group selection for "Add to Group" quick action
     const [quickGroupSelect, setQuickGroupSelect] = useState('');
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = () => setOpenMenu(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -49,6 +58,31 @@ function DisplayManager() {
             console.error('Error loading data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRenameGroup = async (groupId, newName) => {
+        const renameTree = (list) =>
+            list.map(g => (
+                g.id === groupId
+                    ? { ...g, name: newName }
+                    : { ...g, subgroups: g.subgroups ? renameTree(g.subgroups) : [] }
+            ));
+
+        const nextGroups = renameTree(groups);
+        setGroups(nextGroups);
+        try {
+            const result = await api.saveGroups(nextGroups);
+            if (result?.success && result.groups) {
+                setGroups(result.groups);
+            } else if (result?.success === false) {
+                alert(result.message || 'Failed to rename group');
+                await loadData();
+            }
+        } catch (error) {
+            console.error('Error renaming group:', error);
+            alert('Error renaming group');
+            await loadData();
         }
     };
 
@@ -238,6 +272,7 @@ function DisplayManager() {
                             alert('Error deleting group');
                         }
                     }}
+                    onRenameGroup={handleRenameGroup}
                     items={displays}
                     itemType="display"
                 />
@@ -274,53 +309,145 @@ function DisplayManager() {
                             <option value="impressions">Sort by Impressions</option>
                         </select>
 
+                        <div className="view-toggle">
+                            <button
+                                className={`view-btn ${viewMode === 'card' ? 'active' : ''}`}
+                                onClick={() => setViewMode('card')}
+                                title="Card View"
+                            >
+                                <FiGrid />
+                            </button>
+                            <button
+                                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setViewMode('list')}
+                                title="List View"
+                            >
+                                <FiList />
+                            </button>
+                        </div>
+
                         <div className="total-count">
                             Total: {filteredDisplays.length}
                         </div>
                     </div>
 
-                    <div className="displays-grid simple-card-view">
+                    <div className={`displays-grid ${viewMode}-view`}>
                         {filteredDisplays.map(display => (
-                            <div key={display.id} className="display-card simple">
-                                <div className="card-header">
-                                    <h3 className="display-id">{display.id} <span className={`status-dot ${display.status}`}></span></h3>
-                                </div>
+                            <div key={display.id} className={`display-card ${viewMode}`}>
+                                {viewMode === 'card' ? (
+                                    <>
+                                        <div className="card-header">
+                                            <h3 className="display-id">{display.id} <span className={`status-dot ${display.status}`}></span></h3>
+                                            <div className="menu-wrapper mobile-only" style={{ marginLeft: 'auto' }}>
+                                                <button className="icon-btn menu-btn" onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === display.id ? null : display.id); }} title="More options">
+                                                    <FiMoreVertical />
+                                                </button>
+                                                {openMenu === display.id && (
+                                                    <div className="dropdown-menu" style={{ right: 0, top: '100%', zIndex: 9999 }}>
+                                                        <button onClick={() => { openDetailsModal(display); setOpenMenu(null); }}>View</button>
+                                                        <button onClick={() => { openEditModal(display); setOpenMenu(null); }}>Edit</button>
+                                                        <button onClick={() => { openGroupModal(display); setOpenMenu(null); }}>Add to Group</button>
+                                                        <button onClick={() => { handleDelete(display.id); setOpenMenu(null); }}>Delete</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
 
-                                <div className="card-content">
-                                    <div className="info-row" title="Direct Map Link">
-                                        <FiMapPin />
-                                        {display.gpsCoordinates ? (
-                                            <a
-                                                href={display.googleMapsLink || `https://www.google.com/maps?q=${display.gpsCoordinates}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                {display.gpsCoordinates}
-                                            </a>
-                                        ) : <span>No GPS</span>}
-                                    </div>
-                                    <p className="address-truncate">{display.address}</p>
-                                    <div className="meta-info">
-                                        <span>Installed: {new Date(display.installedDate).toLocaleDateString()}</span>
-                                        <span>By: {display.installerName}</span>
-                                    </div>
-                                </div>
+                                        <div className="card-content">
+                                            <div className="info-row" title="Direct Map Link">
+                                                <FiMapPin />
+                                                {display.gpsCoordinates ? (
+                                                    <a
+                                                        href={display.googleMapsLink || `https://www.google.com/maps?q=${display.gpsCoordinates}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {display.gpsCoordinates}
+                                                    </a>
+                                                ) : <span>No GPS</span>}
+                                            </div>
+                                            <p className="address-truncate">{display.address}</p>
+                                            <div className="meta-info">
+                                                <span>Installed: {new Date(display.installedDate).toLocaleDateString()}</span>
+                                                <span>By: {display.installerName}</span>
+                                            </div>
+                                        </div>
 
-                                <div className="card-actions">
-                                    <button className="icon-btn view" onClick={() => openDetailsModal(display)} title="View Details">
-                                        <FiEye />
-                                    </button>
-                                    <button className="icon-btn edit" onClick={() => openEditModal(display)} title="Edit">
-                                        <FiEdit2 />
-                                    </button>
-                                    <button className="icon-btn group-add" onClick={() => openGroupModal(display)} title="Add to Group">
-                                        <FiFolderPlus />
-                                    </button>
-                                    <button className="icon-btn delete" onClick={() => handleDelete(display.id)} title="Delete">
-                                        <FiTrash2 />
-                                    </button>
-                                </div>
+                                        <div className="card-actions">
+                                            <button className="icon-btn view desktop-only" onClick={() => openDetailsModal(display)} title="View Details">
+                                                <FiEye />
+                                            </button>
+                                            <button className="icon-btn edit desktop-only" onClick={() => openEditModal(display)} title="Edit">
+                                                <FiEdit2 />
+                                            </button>
+                                            <button className="icon-btn group-add desktop-only" onClick={() => openGroupModal(display)} title="Add to Group">
+                                                <FiFolderPlus />
+                                            </button>
+                                            <button className="icon-btn delete desktop-only" onClick={() => handleDelete(display.id)} title="Delete">
+                                                <FiTrash2 />
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="list-content">
+                                        <div className="list-item-header">
+                                            <h3 className="display-id">
+                                                {display.id}
+                                                <span className={`status-dot ${display.status}`}></span>
+                                            </h3>
+                                        </div>
+                                        <div className="list-item-info">
+                                            <div className="info-row">
+                                                <FiMapPin />
+                                                {display.gpsCoordinates ? (
+                                                    <a
+                                                        href={display.googleMapsLink || `https://www.google.com/maps?q=${display.gpsCoordinates}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {display.gpsCoordinates}
+                                                    </a>
+                                                ) : <span>No GPS</span>}
+                                            </div>
+                                            <p className="address-text">{display.address}</p>
+                                            <div className="list-meta">
+                                                <span>Installed: {new Date(display.installedDate).toLocaleDateString()}</span>
+                                                <span>By: {display.installerName}</span>
+                                                {display.groupId && <span>Group: {display.groupId}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="card-actions">
+                                            <button className="icon-btn view desktop-only" onClick={() => openDetailsModal(display)} title="View Details">
+                                                <FiEye />
+                                            </button>
+                                            <button className="icon-btn edit desktop-only" onClick={() => openEditModal(display)} title="Edit">
+                                                <FiEdit2 />
+                                            </button>
+                                            <button className="icon-btn group-add desktop-only" onClick={() => openGroupModal(display)} title="Add to Group">
+                                                <FiFolderPlus />
+                                            </button>
+                                            <button className="icon-btn delete desktop-only" onClick={() => handleDelete(display.id)} title="Delete">
+                                                <FiTrash2 />
+                                            </button>
+                                            <div className="menu-wrapper mobile-only">
+                                                <button className="icon-btn menu-btn" onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === display.id ? null : display.id); }} title="More options">
+                                                    <FiMoreVertical />
+                                                </button>
+                                                {openMenu === display.id && (
+                                                    <div className="dropdown-menu">
+                                                        <button onClick={() => { openDetailsModal(display); setOpenMenu(null); }}>View</button>
+                                                        <button onClick={() => { openEditModal(display); setOpenMenu(null); }}>Edit</button>
+                                                        <button onClick={() => { openGroupModal(display); setOpenMenu(null); }}>Add to Group</button>
+                                                        <button onClick={() => { handleDelete(display.id); setOpenMenu(null); }}>Delete</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                             </div>
                         ))}
                     </div>
@@ -368,7 +495,45 @@ function DisplayManager() {
 
                         <div className="details-layout">
                             <div className="details-media">
-                                {currentDisplay.photoUrl ? (
+                                {currentDisplay.photos && currentDisplay.photos.length > 0 ? (
+                                    <div className="photo-gallery-modal">
+                                        <img 
+                                            src={`http://localhost:3001${currentDisplay.photos[galleryPhotoIndex]}`}
+                                            alt="Display"
+                                            className="modal-gallery-image"
+                                        />
+                                        {currentDisplay.photos.length > 1 && (
+                                            <div className="modal-gallery-nav">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setGalleryPhotoIndex(prev => prev > 0 ? prev - 1 : currentDisplay.photos.length - 1)}
+                                                    className="nav-arrow"
+                                                >
+                                                    ◀
+                                                </button>
+                                                <span className="photo-counter">{galleryPhotoIndex + 1} / {currentDisplay.photos.length}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setGalleryPhotoIndex(prev => prev < currentDisplay.photos.length - 1 ? prev + 1 : 0)}
+                                                    className="nav-arrow"
+                                                >
+                                                    ▶
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="thumbnail-row">
+                                            {currentDisplay.photos.map((photo, idx) => (
+                                                <img
+                                                    key={idx}
+                                                    src={`http://localhost:3001${photo}`}
+                                                    alt={`Photo ${idx + 1}`}
+                                                    className={`thumbnail-img ${idx === galleryPhotoIndex ? 'active' : ''}`}
+                                                    onClick={() => setGalleryPhotoIndex(idx)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : currentDisplay.photoUrl ? (
                                     <img src={`http://localhost:3001${currentDisplay.photoUrl}`} alt={currentDisplay.id} />
                                 ) : (
                                     <div className="no-media">No Photo Available</div>

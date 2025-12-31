@@ -137,14 +137,19 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
                 window.URL.revokeObjectURL(video.src);
                 const duration = video.duration;
 
-                if (duration < 5 || duration > 10) {
-                    alert(`Video must be between 5-10 seconds. Current: ${duration.toFixed(1)}s`);
+                // Strict validation: must be in one of two tiers
+                const isInFiveSecTier = duration >= 5.00 && duration <= 5.50;
+                const isInTenSecTier = duration >= 10.00 && duration <= 10.50;
+
+                if (!isInFiveSecTier && !isInTenSecTier) {
+                    alert(`Video must be 5.00-5.50 seconds or 10.00-10.50 seconds. Current: ${duration.toFixed(2)}s`);
                     setMediaFile(null);
                     setMediaPreview(null);
                     return;
                 }
 
-                const tier = duration <= 5 ? '5s' : '10s';
+                // Assign to correct tier
+                const tier = isInFiveSecTier ? '5s' : '10s';
                 setFormData(prev => ({ ...prev, videoDuration: tier }));
             };
             video.src = URL.createObjectURL(file);

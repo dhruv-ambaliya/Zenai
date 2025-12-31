@@ -148,22 +148,38 @@ router.post('/', upload.single('media'), async (req, res) => {
                 // Video duration
                 duration = await getVideoDuration(tempPath);
 
-                if (duration < 5 || duration > 10) {
+                // Strict validation: must be in one of two tiers
+                const isInFiveSecTier = duration >= 5.00 && duration <= 5.50;
+                const isInTenSecTier = duration >= 10.00 && duration <= 10.50;
+
+                if (!isInFiveSecTier && !isInTenSecTier) {
+                    fs.unlinkSync(tempPath); // Clean up uploaded file
                     return res.status(400).json({
                         success: false,
-                        message: `Video must be between 5-10 seconds. Current duration: ${duration.toFixed(1)}s`
+                        message: `Video must be 5.00-5.50 seconds or 10.00-10.50 seconds. Current duration: ${duration.toFixed(2)}s`
                     });
                 }
 
-                durationTier = duration <= 5 ? '5s' : '10s';
+                // Determine target duration and crop
+                const targetSeconds = isInFiveSecTier ? 5 : 10;
+                durationTier = targetSeconds === 5 ? '5s' : '10s';
 
-                const ext = path.extname(req.file.originalname);
-                const newFilename = `${newId}${ext}`;
+                // Crop to exact target length - NO re-encoding, just trim
+                const newFilename = `${newId}.mp4`;
                 const newPath = path.join(ADS_UPLOAD_DIR, newFilename);
-                fs.renameSync(tempPath, newPath);
+                try {
+                    // Stream copy only - no re-encoding, just crop duration
+                    await execPromise(`ffmpeg -y -i "${tempPath}" -t ${targetSeconds} -c copy -movflags +faststart "${newPath}"`);
+                    fs.unlinkSync(tempPath);
+                } catch (err) {
+                    console.error('Error cropping/transcoding video:', err);
+                    // Fallback: move original file if ffmpeg fails
+                    fs.renameSync(tempPath, newPath);
+                }
 
                 finalMediaUrl = `/uploads/ads/${newFilename}`;
                 finalMediaType = 'video';
+                duration = targetSeconds; // store actual after crop
             } else {
                 // Image path
                 const ext = path.extname(req.file.originalname);

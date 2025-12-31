@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiSearch, FiGrid, FiList, FiMoreVertical } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import AdForm from '../../components/AdForm';
@@ -21,9 +21,17 @@ function AdManager() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortBy, setSortBy] = useState('date');
+    const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
+    const [openMenu, setOpenMenu] = useState(null); // Track which ad's menu is open
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = () => setOpenMenu(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -154,48 +162,132 @@ function AdManager() {
                     <option value="name">Sort by Name</option>
                 </select>
 
+                <div className="view-toggle">
+                    <button
+                        className={`view-btn ${viewMode === 'card' ? 'active' : ''}`}
+                        onClick={() => setViewMode('card')}
+                        title="Card View"
+                    >
+                        <FiGrid />
+                    </button>
+                    <button
+                        className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                        onClick={() => setViewMode('list')}
+                        title="List View"
+                    >
+                        <FiList />
+                    </button>
+                </div>
+
                 <div className="total-count">
                     Total: {filteredAds.length}
                 </div>
             </div>
 
-            <div className="ads-grid vertical-view">
+            <div className={viewMode === 'card' ? 'ads-grid vertical-view' : 'ads-grid list-view'}>
                 {filteredAds.map(ad => (
-                    <div key={ad.id} className="ad-card vertical">
-                        <div className="card-preview">
-                            <div className="preview-container">
-                                {ad.mediaUrl ? (
-                                    ad.mediaType === 'video' ? (
-                                        <video src={`http://localhost:3001${ad.mediaUrl}`} className="fit-content" />
+                    <div key={ad.id} className={viewMode === 'card' ? 'ad-card vertical' : 'ad-card list'}>
+                        {viewMode === 'card' ? (
+                            <>
+                                <div className="card-preview">
+                                    <div className="preview-container">
+                                        {ad.mediaUrl ? (
+                                            ad.mediaType === 'video' ? (
+                                                <video src={`http://localhost:3001${ad.mediaUrl}`} className="fit-content" />
+                                            ) : (
+                                                <img src={`http://localhost:3001${ad.mediaUrl}`} alt={ad.name} className="fit-content" />
+                                            )
+                                        ) : (
+                                            <div className="no-media">No Media</div>
+                                        )}
+                                    </div>                                    <div className="card-menu-wrapper mobile-only">
+                                        <button className="corner-menu-btn" onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === ad.id ? null : ad.id); }} title="More options">
+                                            <FiMoreVertical />
+                                        </button>
+                                        {openMenu === ad.id && (
+                                            <div className="dropdown-menu corner">
+                                                <button onClick={() => { openDetailsModal(ad); setOpenMenu(null); }}>View</button>
+                                                <button onClick={() => { openEditModal(ad); setOpenMenu(null); }}>Edit</button>
+                                                <button onClick={() => { handleDelete(ad.id); setOpenMenu(null); }}>Delete</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="card-content">
+                                    <h3>{ad.name}</h3>
+                                    <h6 className="ad-id">{ad.id} &nbsp; <span className={`status-dot ${ad.status}`}></span></h6>
+                                    <div className="ad-metrics">
+                                        <span>Rem. Days: <strong>{getRemainingDays(ad)}</strong></span>
+                                        <span>Price: <strong>₹{ad.finalPrice?.toLocaleString()}</strong></span>
+                                    </div>
+                                </div>
+
+                                <div className="card-actions">
+                                    <button className="icon-btn view desktop-only" onClick={() => openDetailsModal(ad)} title="View Details">
+                                        <FiEye />
+                                    </button>
+                                    <button className="icon-btn edit desktop-only" onClick={() => openEditModal(ad)} title="Edit">
+                                        <FiEdit2 />
+                                    </button>
+                                    <button className="icon-btn delete desktop-only" onClick={() => handleDelete(ad.id)} title="Delete">
+                                        <FiTrash2 />
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="list-content">
+                                <div className="list-item-preview">
+                                    {ad.mediaUrl ? (
+                                        ad.mediaType === 'video' ? (
+                                            <video src={`http://localhost:3001${ad.mediaUrl}`} className="fit-content" />
+                                        ) : (
+                                            <img src={`http://localhost:3001${ad.mediaUrl}`} alt={ad.name} className="fit-content" />
+                                        )
                                     ) : (
-                                        <img src={`http://localhost:3001${ad.mediaUrl}`} alt={ad.name} className="fit-content" />
-                                    )
-                                ) : (
-                                    <div className="no-media">No Media</div>
-                                )}
-                            </div>
-                        </div>
+                                        <div className="no-media">No Media</div>
+                                    )}
+                                </div>
+                                <div className="list-item-info">
+                                    <div className="list-item-header">
+                                        <h3>{ad.name}</h3>
+                                        <span className={`status-dot ${ad.status}`}></span>
+                                    </div>
+                                    <p className="ad-id">{ad.id}</p>
+                                    <p className="company">Company: {ad.companyName}</p>
+                                    <div className="list-metrics">
+                                        <span>Duration: <strong>{ad.videoDuration}</strong></span>
+                                        <span>Displays: <strong>{ad.numDisplays}</strong></span>
+                                        <span>Days Remaining: <strong>{getRemainingDays(ad)}</strong></span>
+                                        <span>Price: <strong>₹{ad.finalPrice?.toLocaleString()}</strong></span>
+                                    </div>
+                                </div>
+                                <div className="card-actions">
+                                    <button className="icon-btn view desktop-only" onClick={() => openDetailsModal(ad)} title="View Details">
+                                        <FiEye />
+                                    </button>
+                                    <button className="icon-btn edit desktop-only" onClick={() => openEditModal(ad)} title="Edit">
+                                        <FiEdit2 />
+                                    </button>
+                                    <button className="icon-btn delete desktop-only" onClick={() => handleDelete(ad.id)} title="Delete">
+                                        <FiTrash2 />
+                                    </button>
 
-                        <div className="card-content">
-                            <h3>{ad.name}</h3>
-                            <h6 className="ad-id">{ad.id} &nbsp; <span className={`status-dot ${ad.status}`}></span></h6>
-                            <div className="ad-metrics">
-                                <span>Rem. Days: <strong>{getRemainingDays(ad)}</strong></span>
-                                <span>Price: <strong>₹{ad.finalPrice?.toLocaleString()}</strong></span>
+                                    <div className="menu-wrapper mobile-only" style={{ position: 'relative' }}>
+                                        <button className="icon-btn menu-btn" onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === ad.id ? null : ad.id); }} title="More options">
+                                            <FiMoreVertical />
+                                        </button>
+                                        {openMenu === ad.id && (
+                                            <div className="dropdown-menu" style={{ right: 0, top: '100%', zIndex: 1000 }}>
+                                                <button onClick={() => { openDetailsModal(ad); setOpenMenu(null); }}>View</button>
+                                                <button onClick={() => { openEditModal(ad); setOpenMenu(null); }}>Edit</button>
+                                                <button onClick={() => { handleDelete(ad.id); setOpenMenu(null); }}>Delete</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="card-actions">
-                            <button className="icon-btn view" onClick={() => openDetailsModal(ad)} title="View Details">
-                                <FiEye />
-                            </button>
-                            <button className="icon-btn edit" onClick={() => openEditModal(ad)} title="Edit">
-                                <FiEdit2 />
-                            </button>
-                            <button className="icon-btn delete" onClick={() => handleDelete(ad.id)} title="Delete">
-                                <FiTrash2 />
-                            </button>
-                        </div>
+                        )}
                     </div>
                 ))}
             </div>

@@ -22,6 +22,9 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
 
     const [photoFile, setPhotoFile] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(null);
+    const [photoFiles, setPhotoFiles] = useState([]); // Multiple photos
+    const [photoPreviews, setPhotoPreviews] = useState([]); // Multiple previews
+    const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0); // Gallery navigation
 
     useEffect(() => {
         loadAuxData();
@@ -36,8 +39,13 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                 impressions: display.impressions || 100000,
                 groupId: display.groupId || ''
             });
-            if (display.photoUrl) {
-                setPhotoPreview(`http://localhost:3001${display.photoUrl}`);
+            // Load existing photos for gallery
+            if (display.photos && Array.isArray(display.photos)) {
+                const previews = display.photos.map(photo => `http://localhost:3001${photo}`);
+                setPhotoPreviews(previews);
+            } else if (display.photoUrl) {
+                // Fallback for single photo
+                setPhotoPreviews([`http://localhost:3001${display.photoUrl}`]);
             }
         } else if (isInstaller) {
             // Pre-fill installer ID if installer is adding
@@ -62,23 +70,33 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
     };
 
     const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setPhotoFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotoPreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            setPhotoFiles(files);
+            const newPreviews = [];
+            let loadedCount = 0;
+
+            files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    newPreviews.push(reader.result);
+                    loadedCount++;
+                    if (loadedCount === files.length) {
+                        setPhotoPreviews(newPreviews);
+                        setCurrentPhotoIndex(0);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate photo is mandatory for new displays
-        if (!photoFile && !isEditing) {
-            alert('Display photo is required. Please select a photo before submitting.');
+        // Validate photos are mandatory for new displays
+        if (photoFiles.length === 0 && !isEditing && photoPreviews.length === 0) {
+            alert('At least one display photo is required. Please select photos before submitting.');
             return;
         }
 
@@ -103,8 +121,11 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                 submitData.append('groupId', formData.groupId);
             }
 
-            if (photoFile) {
-                submitData.append('photo', photoFile);
+            // Add multiple photos
+            if (photoFiles.length > 0) {
+                photoFiles.forEach((file) => {
+                    submitData.append('photos', file);
+                });
             }
 
             // Get installer name from ID
@@ -157,9 +178,45 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                         <div className="display-preview-panel">
                             <label>Display Photo</label>
                             <div className="photo-preview-container">
-                                {photoPreview && (
-                                    <div className="photo-preview-box">
-                                        <img src={photoPreview} alt="Preview" />
+                                {photoPreviews.length > 0 ? (
+                                    <div className="photo-gallery">
+                                        <div className="photo-preview-box">
+                                            <img src={photoPreviews[currentPhotoIndex]} alt={`Preview ${currentPhotoIndex + 1}`} />
+                                        </div>
+                                        {photoPreviews.length > 1 && (
+                                            <div className="gallery-nav">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setCurrentPhotoIndex(prev => prev > 0 ? prev - 1 : photoPreviews.length - 1)}
+                                                    className="nav-btn prev"
+                                                >
+                                                    ← Prev
+                                                </button>
+                                                <span className="photo-counter">{currentPhotoIndex + 1} / {photoPreviews.length}</span>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setCurrentPhotoIndex(prev => prev < photoPreviews.length - 1 ? prev + 1 : 0)}
+                                                    className="nav-btn next"
+                                                >
+                                                    Next →
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="thumbnail-strip">
+                                            {photoPreviews.map((preview, idx) => (
+                                                <img 
+                                                    key={idx}
+                                                    src={preview} 
+                                                    alt={`Thumb ${idx + 1}`}
+                                                    className={`thumbnail ${idx === currentPhotoIndex ? 'active' : ''}`}
+                                                    onClick={() => setCurrentPhotoIndex(idx)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="photo-preview-box empty">
+                                        <p>No photos selected</p>
                                     </div>
                                 )}
                             </div>
@@ -167,10 +224,12 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    multiple
                                     onChange={handlePhotoChange}
-                                    required={!isEditing}
+                                    required={!isEditing && photoPreviews.length === 0}
                                     disabled={isSubmitting}
                                 />
+                                <small>Select one or more images (up to 10)</small>
                             </div>
                         </div>
 

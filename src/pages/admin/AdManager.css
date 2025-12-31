@@ -35,21 +35,30 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 25px;
+    width: 100%;
 }
 
 .ad-card.vertical {
     background: white;
     border-radius: 12px;
-    overflow: hidden;
+    /* overflow: hidden; Removed to allow dropdowns */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    position: relative;
+    /* Establish context */
 }
 
 .ad-card.vertical:hover {
-    transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 769px) {
+    .ad-card.vertical:hover {
+        transform: translateY(-5px);
+    }
 }
 
 .card-preview {
@@ -281,52 +290,52 @@
     .ads-grid.vertical-view {
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     }
-    
+
     .details-layout {
         flex-direction: column;
     }
-    
+
     .vertical-mockup {
         width: 200px;
         height: 355px;
         align-self: center;
     }
-    
+
     .modal-content.details-view {
         max-width: 90%;
     }
-    
+
     .modal-content.details-view .details-layout {
         flex-direction: column;
         gap: 20px;
     }
-    
+
     .modal-content.details-view .details-media {
         width: 100%;
         max-width: 240px;
         margin: 0 auto;
     }
-    
+
     .modal-content.details-view .details-info {
         width: 100%;
         max-height: 50vh;
         overflow-y: auto;
         padding-right: 10px;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar-track {
         background: #f1f1f1;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar-thumb {
         background: #888;
         border-radius: 3px;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
@@ -336,83 +345,84 @@
     .ad-manager {
         padding: 15px;
     }
-    
+
     .toolbar {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
     }
-    
+
     .toolbar select {
         width: 100%;
     }
-    
+
     .ads-grid.vertical-view {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
-    
+
     .card-preview {
         height: 250px;
     }
-    
+
     .panel-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .modal-actions {
         flex-direction: column;
     }
-    
-    .btn-primary, .btn-secondary {
+
+    .btn-primary,
+    .btn-secondary {
         width: 100%;
     }
-    
+
     .modal-content.details-view {
         width: 95%;
         max-height: 95vh;
         padding: 20px;
     }
-    
+
     .modal-content.details-view h2 {
         font-size: 1.3em;
         margin-bottom: 15px;
     }
-    
+
     .modal-content.details-view .details-media {
         width: 100%;
         max-width: 220px;
         height: auto;
         margin: 0 auto;
     }
-    
+
     .modal-content.details-view .vertical-mockup {
         width: 160px;
         height: 284px;
     }
-    
+
     .modal-content.details-view .details-info {
         width: 100%;
         max-height: 45vh;
         overflow-y: auto;
         padding-right: 10px;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar-thumb {
         background: #888;
         border-radius: 3px;
     }
-    
+
     .modal-content.details-view .details-info::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
-    
+
     .modal-content.details-view .detail-row {
         padding: 10px 0;
         border-bottom: 1px solid #f0f0f0;
@@ -423,58 +433,675 @@
     .ad-manager {
         padding: 10px;
     }
-    
+
     .ads-grid.vertical-view {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px;
     }
-    
+
+    /* Disable transform on mobile just in case */
+    .ad-card.vertical:hover {
+        transform: none !important;
+    }
+
+    .card-preview {
+        height: 140px;
+        /* Reduced height */
+    }
+
+    .card-content {
+        padding: 8px;
+    }
+
+    .card-actions {
+        padding: 6px 8px;
+        gap: 4px;
+    }
+
     .card-content h3 {
-        font-size: 1em;
+        font-size: 0.9em;
+        /* Smaller font */
     }
-    
+
     .ad-metrics {
-        font-size: 0.75em;
+        font-size: 0.7em;
     }
-    
+
     .vertical-mockup {
         width: 150px;
         height: 266px;
     }
-    
+
     .modal-content.details-view {
         width: 100%;
         border-radius: 0;
         max-height: 100vh;
         padding: 15px;
     }
-    
+
     .modal-content.details-view h2 {
         font-size: 1.2em;
         margin-bottom: 15px;
     }
-    
+
     .modal-content.details-view .vertical-mockup {
         width: 140px;
         height: 248px;
     }
-    
+
     .modal-content.details-view .details-info {
         width: 100%;
         max-height: 50vh;
         overflow-y: auto;
         font-size: 0.9em;
     }
-    
+
     .modal-content.details-view .detail-row {
         padding: 8px 0;
     }
-    
+
     .modal-content.details-view .detail-row label {
         font-size: 0.85em;
         margin-bottom: 3px;
     }
-    
+
     .modal-content.details-view .detail-row .value {
         font-size: 0.9em;
     }
+
+    /* Ensure dropdown is visible */
+    .dropdown-menu.corner {
+        z-index: 9999;
+    }
+}
+
+/* View Toggle Styles */
+.view-toggle {
+    display: flex;
+    gap: 5px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 3px;
+    background: white;
+}
+
+.view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.view-btn:hover {
+    color: #2c3e50;
+    background: #f0f0f0;
+}
+
+.view-btn.active {
+    background: #3498db;
+    color: white;
+}
+
+/* List View Styles */
+.ads-grid.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ad-card.list {
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.ad-card.list:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(5px);
+}
+
+.list-item-preview {
+    min-width: 80px;
+    width: 80px;
+    height: 80px;
+    background: #000;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.list-item-preview img,
+.list-item-preview video {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.list-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    width: 100%;
+}
+
+.list-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.list-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.list-item-header h3 {
+    margin: 0;
+    font-size: 1em;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.list-item-info .ad-id {
+    color: #95a5a6;
+    font-size: 0.8em;
+    margin: 3px 0;
+}
+
+.list-item-info .company {
+    color: #555;
+    font-size: 0.9em;
+    margin: 3px 0;
+}
+
+.list-metrics {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85em;
+    color: #34495e;
+    flex-wrap: wrap;
+}
+
+.list-metrics span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Card View (Mobile) */
+@media (max-width: 1024px) {
+    .ads-grid.card-view {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 15px;
+    }
+
+    .card-preview {
+        height: 240px;
+    }
+
+    .ad-metrics {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ad-metrics span {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    .ad-manager {
+        padding: 12px;
+    }
+
+    .ads-grid.vertical-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .ad-card.vertical {
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-preview {
+        height: 200px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .toolbar select,
+    .search-box,
+    .total-count,
+    .view-toggle {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .search-box {
+        padding: 10px 12px;
+    }
+
+    .view-toggle {
+        border-radius: 12px;
+        padding: 4px;
+    }
+
+    .view-btn {
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    /* List view on mobile - horizontal compact layout */
+    .ads-grid.list-view {
+        gap: 12px;
+    }
+
+    .ad-card.list {
+        padding: 8px 10px;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 10px;
+        min-height: auto;
+    }
+
+    .list-content {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        width: auto;
+        min-height: auto;
+        min-width: 0;
+    }
+
+    .list-item-preview {
+        width: 60px;
+        height: 80px;
+        min-width: 60px;
+        max-width: 60px;
+        border-radius: 6px;
+        flex-shrink: 0;
+        background: #000;
+    }
+
+    .list-item-info {
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .list-item-header {
+        margin-bottom: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+    }
+
+    .list-item-header h3 {
+        font-size: 0.95em;
+        margin: 0;
+        padding: 0;
+        line-height: 1.2;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .list-item-header .status-dot {
+        width: 8px;
+        height: 8px;
+        min-width: 8px;
+    }
+
+    .list-item-info .ad-id {
+        font-size: 0.65em;
+        margin: 0;
+        padding: 0;
+        line-height: 1.2;
+        color: #999;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .list-item-info .company {
+        font-size: 0.7em;
+        margin: 0;
+        padding: 0;
+        line-height: 1.2;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .list-metrics {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        font-size: 0.7em;
+        flex-wrap: wrap;
+        margin-top: 3px;
+        color: #666;
+        line-height: 1.4;
+    }
+
+    .list-metrics span {
+        display: flex;
+        gap: 3px;
+        white-space: nowrap;
+    }
+
+    .ad-card.list .card-actions {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        padding: 0;
+        border: none;
+        margin: 0;
+        width: auto;
+        flex-shrink: 0;
+        align-items: center;
+    }
+
+    .ad-card.list .icon-btn {
+        padding: 5px;
+        font-size: 0.9em;
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .ads-grid.card-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .ad-card.vertical {
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .card-preview {
+        height: 180px;
+        background: #000;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toolbar select,
+    .search-box,
+    .total-count,
+    .view-toggle {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .view-toggle {
+        border-radius: 10px;
+        padding: 4px;
+    }
+
+    .view-btn {
+        flex: 1;
+        padding: 10px;
+    }
+
+    .card-content h3 {
+        font-size: 1.05em;
+    }
+
+    .ad-metrics {
+        flex-direction: column;
+        gap: 6px;
+        background: #f7f9fb;
+    }
+
+    .ad-metrics span {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    /* Mobile list tiles */
+    .ad-card.list {
+        padding: 12px;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        background: #fff;
+    }
+
+    .list-item-preview {
+        width: 72px;
+        height: 72px;
+        border-radius: 8px;
+    }
+
+    .list-item-header h3 {
+        font-size: 1rem;
+    }
+
+    .list-metrics {
+        gap: 12px;
+    }
+}
+
+/* Desktop/Mobile button visibility */
+.desktop-only {
+    display: flex;
+}
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: flex !important;
+    }
+}
+
+/* 3-dot menu styles */
+.menu-wrapper {
+    position: relative;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-btn:hover {
+    color: #2c3e50;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 140px;
+    margin-top: 5px;
+}
+
+.dropdown-menu button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: #333;
+    transition: background 0.2s;
+}
+
+.dropdown-menu button:first-child {
+    border-radius: 6px 6px 0 0;
+}
+
+.dropdown-menu button:last-child {
+    border-radius: 0 0 6px 6px;
+}
+
+.dropdown-menu button:hover {
+    background: #f5f5f5;
+    color: #2c3e50;
+}
+
+/* 3-dot menu and responsive button visibility */
+.desktop-only {
+    display: inline-flex;
+}
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: block;
+    }
+
+    .menu-wrapper {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10;
+        min-width: 120px;
+    }
+
+    .dropdown-menu button {
+        display: block;
+        width: 100%;
+        padding: 10px 15px;
+        border: none;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+        font-size: 0.9em;
+        color: #333;
+        transition: background 0.2s;
+    }
+
+    .dropdown-menu button:hover {
+        background: #f5f5f5;
+    }
+
+    .dropdown-menu button:first-child {
+        border-radius: 6px 6px 0 0;
+    }
+
+    .dropdown-menu button:last-child {
+        border-radius: 0 0 6px 6px;
+    }
+
+    .dropdown-menu button:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .menu-btn {
+        padding: 6px 8px !important;
+        font-size: 1.1em !important;
+    }
+}
+
+/* Card corner menu styling */
+.card-menu-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 5;
+}
+
+.corner-menu-btn {
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    color: white;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    transition: background 0.2s;
+}
+
+.corner-menu-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.dropdown-menu.corner {
+    top: 32px;
+    right: 0;
+    position: absolute;
 }

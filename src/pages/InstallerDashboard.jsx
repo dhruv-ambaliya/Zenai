@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import { FiMonitor, FiPlus, FiLogOut, FiMapPin, FiCalendar, FiEye, FiEdit2, FiSearch } from 'react-icons/fi';
+import { FiMonitor, FiPlus, FiLogOut, FiMapPin, FiCalendar, FiEye, FiEdit2, FiSearch, FiGrid, FiList } from 'react-icons/fi';
 import DisplayForm from '../components/DisplayForm';
 import './InstallerDashboard.css';
 
@@ -18,6 +18,7 @@ function InstallerDashboard() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortBy, setSortBy] = useState('date');
+    const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
 
     useEffect(() => {
         loadData();
@@ -130,6 +131,22 @@ function InstallerDashboard() {
                             <option value="date">Sort by Date</option>
                             <option value="id">Sort by ID</option>
                         </select>
+                        <div className="view-toggle">
+                            <button
+                                className={`view-btn ${viewMode === 'card' ? 'active' : ''}`}
+                                onClick={() => setViewMode('card')}
+                                title="Card View"
+                            >
+                                <FiGrid />
+                            </button>
+                            <button
+                                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setViewMode('list')}
+                                title="List View"
+                            >
+                                <FiList />
+                            </button>
+                        </div>
                     </div>
                     <button className="btn-primary" onClick={handleAddClick}>
                         <FiPlus /> Add Display
@@ -137,41 +154,73 @@ function InstallerDashboard() {
                 </div>
 
                 {/* Displays Grid - Simplified View (Matched with Admin styles conceptually but specific to installer) */}
-                <div className="displays-grid">
+                <div className={`displays-grid ${viewMode}-view`}>
                     {filtered.length === 0 ? (
                         <div className="no-data">
                             <p>No displays installed yet. Click "Add Display" to get started.</p>
                         </div>
                     ) : (
                         filtered.map(display => (
-                            <div key={display.id} className="display-card-simple">
-                                <div className="card-header-simple">
-                                    <h3 className="display-unique-id">
-                                        {display.id}
-                                        <span className={`status-dot ${display.status}`}></span>
-                                    </h3>
-                                    <span className="internal-id">Installed: {new Date(display.installedDate).toLocaleDateString()}</span>
-                                </div>
+                            <div key={display.id} className={`display-card-simple ${viewMode}`}>
+                                {viewMode === 'card' ? (
+                                    <>
+                                        <div className="card-header-simple">
+                                            <h3 className="display-unique-id">
+                                                {display.id}
+                                                <span className={`status-dot ${display.status}`}></span>
+                                            </h3>
+                                            <span className="internal-id">Installed: {new Date(display.installedDate).toLocaleDateString()}</span>
+                                        </div>
 
-                                <div className="card-body-simple">
-                                    <div className="info-item">
-                                        <FiMapPin />
-                                        <span>{display.gpsCoordinates || 'No GPS'}</span>
-                                    </div>
-                                    <div className="info-item">
-                                        <FiCalendar />
-                                        <span>Address: {display.address}</span>
-                                    </div>
-                                </div>
+                                        <div className="card-body-simple">
+                                            <div className="info-item">
+                                                <FiMapPin />
+                                                <span>{display.gpsCoordinates || 'No GPS'}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <FiCalendar />
+                                                <span>Address: {display.address}</span>
+                                            </div>
+                                        </div>
 
-                                <div className="card-footer-simple">
-                                    <button className="btn-edit-simple" onClick={() => { setShowViewModal(true); setEditingDisplay(display); }}>
-                                        <FiEye /> View
-                                    </button>
-                                    <button className="btn-edit-simple" onClick={() => handleEditClick(display)}>
-                                        <FiEdit2 /> Edit Details
-                                    </button>
-                                </div>
+                                        <div className="card-footer-simple">
+                                            <button className="btn-edit-simple" onClick={() => { setShowViewModal(true); setEditingDisplay(display); }}>
+                                                <FiEye /> View
+                                            </button>
+                                            <button className="btn-edit-simple" onClick={() => { setShowModal(true); setEditingDisplay(display); }}>
+                                                <FiEdit2 /> Edit
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="list-card-simple">
+                                        <div className="list-header-simple">
+                                            <h3 className="display-unique-id">
+                                                {display.id}
+                                                <span className={`status-dot ${display.status}`}></span>
+                                            </h3>
+                                            <span className="internal-id">Installed: {new Date(display.installedDate).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="list-body-simple">
+                                            <div className="info-item">
+                                                <FiMapPin />
+                                                <span>{display.gpsCoordinates || 'No GPS'}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <FiCalendar />
+                                                <span>{display.address}</span>
+                                            </div>
+                                        </div>
+                                        <div className="list-footer-simple">
+                                            <button className="btn-edit-simple" onClick={() => { setShowViewModal(true); setEditingDisplay(display); }}>
+                                                <FiEye /> View
+                                            </button>
+                                            <button className="btn-edit-simple" onClick={() => { setShowModal(true); setEditingDisplay(display); }}>
+                                                <FiEdit2 /> Edit
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}

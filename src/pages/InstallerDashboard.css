@@ -409,3 +409,242 @@
         font-size: 1.4em;
     }
 }
+
+/* View Toggle and List View Styles for Installer */
+.view-toggle {
+    display: flex;
+    gap: 5px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 3px;
+    background: white;
+}
+
+.view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.view-btn:hover {
+    color: #2c3e50;
+    background: #f0f0f0;
+}
+
+.view-btn.active {
+    background: #3498db;
+    color: white;
+}
+
+/* List View Styles for Installer Displays */
+.displays-grid.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.display-card-simple.list {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.display-card-simple.list:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.list-card-simple {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.list-header-simple {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.list-header-simple h3 {
+    margin: 0;
+    font-size: 1em;
+}
+
+.list-body-simple {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 8px 0;
+    padding: 0 0 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.list-footer-simple {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Card View Grid */
+.displays-grid.card-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.display-card-simple.card {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mobile Responsive for Installer Dashboard */
+@media (max-width: 1024px) {
+    .displays-grid.card-view {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 12px;
+    }
+
+    .displays-grid.card-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .display-card-simple.card {
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 14px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toolbar select,
+    .search-box,
+    .view-toggle {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .view-toggle {
+        border-radius: 12px;
+        padding: 4px;
+    }
+
+    .view-btn {
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    .btn-primary {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .displays-grid.list-view {
+        gap: 12px;
+    }
+
+    .display-card-simple.list {
+        padding: 10px;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .list-card-simple {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .list-header-simple {
+        margin-bottom: 2px;
+    }
+
+    .list-header-simple h3 {
+        font-size: 0.9em;
+    }
+
+    .list-body-simple {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .list-body-simple .info-item {
+        font-size: 0.75em;
+    }
+
+    .list-footer-simple {
+        display: flex;
+        flex-direction: row;
+        gap: 6px;
+        padding: 0;
+        border: none;
+        margin: 0;
+    }
+
+    .display-card-simple.list .btn-edit-simple {
+        padding: 6px 10px;
+        font-size: 0.8em;
+        width: auto;
+    }
+
+    .card-footer-simple {
+        padding-top: 10px;
+        border-top: 1px solid #f0f0f0;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .displays-grid.card-view { grid-template-columns: 1fr; gap: 16px; }
+
+    .toolbar { flex-direction: column; gap: 10px; }
+
+    .toolbar select,
+    .search-box,
+    .view-toggle { width: 100%; min-width: unset; flex: 1; }
+
+    .view-toggle { border-radius: 10px; padding: 4px; }
+    .view-btn { flex: 1; padding: 10px; }
+
+    .btn-primary { width: 100%; }
+
+    .action-bar { flex-direction: column; }
+    .action-bar h2 { font-size: 1.3em; }
+
+    .display-card-simple { padding: 12px; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); background: #fff; }
+
+    .card-header-simple,
+    .list-header-simple { flex-direction: column; align-items: flex-start; gap: 6px; }
+
+    .card-footer-simple,
+    .list-footer-simple { flex-direction: column; gap: 8px; }
+
+    .btn-edit-simple { width: 100%; }
+}

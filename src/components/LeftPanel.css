@@ -228,6 +228,67 @@
 
 .group-item {
     margin-bottom: 2px;
+    position: relative;
+}
+
+.input-error {
+    border: 1px solid #e74c3c !important;
+    box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.15);
+}
+
+/* 3-dots menu */
+.group-menu-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: inherit;
+}
+
+.group-header.active .group-menu-btn {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.group-menu {
+    position: absolute;
+    right: 8px;
+    top: 40px;
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    z-index: 5;
+    min-width: 160px;
+    overflow: hidden;
+}
+
+.group-menu.active {
+    /* when parent header is active (blue), ensure menu remains readable */
+    color: #2c3e50;
+}
+
+.group-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.group-menu-item:hover {
+    background: #f7f7f7;
+}
+
+.group-menu-item.danger {
+    color: #e74c3c;
 }
 
 /* Mobile Responsive */

@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
 });
 
 // Add a display
-router.post('/', upload.single('photo'), async (req, res) => {
+router.post('/', upload.array('photos', 10), async (req, res) => {
     try {
         const displays = await readData(FILE_NAME);
         // Ensure installedDate is present, default to today if not
@@ -62,16 +62,23 @@ router.post('/', upload.single('photo'), async (req, res) => {
         const newId = await generateDisplayId(installedDate);
 
         let photoUrl = '';
+        let photoUrls = [];
 
-        if (req.file) {
-            const tempPath = path.join(DISPLAYS_UPLOAD_DIR, req.file.filename);
-            const ext = path.extname(req.file.originalname);
-            const newFilename = `${newId}${ext}`;
-            const newPath = path.join(DISPLAYS_UPLOAD_DIR, newFilename);
+        // Save ALL uploaded images with sequential numbering
+        if (req.files && req.files.length > 0) {
+            req.files.forEach((file, photoIndex) => {
+                const tempPath = path.join(DISPLAYS_UPLOAD_DIR, file.filename);
+                const ext = path.extname(file.originalname);
+                // Format: DS-221225-001-1, DS-221225-001-2, etc.
+                const imageNumber = photoIndex + 1;
+                const newFilename = `${newId}-${imageNumber}${ext}`;
+                const newPath = path.join(DISPLAYS_UPLOAD_DIR, newFilename);
 
-            fs.renameSync(tempPath, newPath);
-
-            photoUrl = `/uploads/displays/${newFilename}`;
+                fs.renameSync(tempPath, newPath);
+                photoUrls.push(`/uploads/displays/${newFilename}`);
+            });
+            
+            photoUrl = photoUrls[0]; // First image as main thumbnail
         }
 
         const newDisplay = {
@@ -80,7 +87,8 @@ router.post('/', upload.single('photo'), async (req, res) => {
             gpsCoordinates: req.body.gpsCoordinates,
             googleMapsLink: req.body.googleMapsLink,
             address: req.body.address,
-            photoUrl: photoUrl,
+            photoUrl: photoUrl, // First photo as main thumbnail
+            photos: photoUrls, // Array with all selected photos
             installedDate: installedDate,
             installerId: req.body.installerId,
             installerName: req.body.installerName,
@@ -100,7 +108,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
 });
 
 // Update a display
-router.put('/:id', upload.single('photo'), async (req, res) => {
+router.put('/:id', upload.array('photos', 10), async (req, res) => {
     try {
         const { id } = req.params;
         const displays = await readData(FILE_NAME);
@@ -113,15 +121,22 @@ router.put('/:id', upload.single('photo'), async (req, res) => {
                 impressions: req.body.impressions ? parseInt(req.body.impressions) : displays[index].impressions
             };
 
-            if (req.file) {
-                const tempPath = path.join(DISPLAYS_UPLOAD_DIR, req.file.filename);
-                const newFilename = `${id}.webp`;
-                const compressedPath = path.join(DISPLAYS_UPLOAD_DIR, newFilename);
+            if (req.files && req.files.length > 0) {
+                let photoUrls = [];
+                req.files.forEach((file, photoIndex) => {
+                    const tempPath = path.join(DISPLAYS_UPLOAD_DIR, file.filename);
+                    const ext = path.extname(file.originalname);
+                    // Format: DS-221225-001-1 (first), DS-221225-001-2 (second), etc.
+                    const imageNumber = photoIndex + 1;
+                    const newFilename = `${id}-${imageNumber}${ext}`;
+                    const newPath = path.join(DISPLAYS_UPLOAD_DIR, newFilename);
 
-                await compressImage(tempPath, compressedPath);
-                fs.unlinkSync(tempPath);
+                    fs.renameSync(tempPath, newPath);
+                    photoUrls.push(`/uploads/displays/${newFilename}`);
+                });
 
-                updatedDisplay.photoUrl = `/uploads/displays/${newFilename}`;
+                updatedDisplay.photos = photoUrls;
+                updatedDisplay.photoUrl = photoUrls[0]; // First image as main
             }
 
             displays[index] = updatedDisplay;
@@ -144,13 +159,24 @@ router.delete('/:id', async (req, res) => {
     displays = displays.filter(d => d.id !== id);
 
     if (displays.length < initialLength) {
-        // Delete the photo file if it exists
-        if (displayToDelete && displayToDelete.photoUrl) {
-            const fileName = path.basename(displayToDelete.photoUrl);
-            const filePath = path.join(DISPLAYS_UPLOAD_DIR, fileName);
-
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
+        // Delete all photo files (supporting both single and multiple photos)
+        if (displayToDelete) {
+            // Check for multiple photos
+            if (displayToDelete.photos && Array.isArray(displayToDelete.photos)) {
+                displayToDelete.photos.forEach(photoUrl => {
+                    const fileName = path.basename(photoUrl);
+                    const filePath = path.join(DISPLAYS_UPLOAD_DIR, fileName);
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                });
+            } else if (displayToDelete.photoUrl) {
+                // Fallback for single photo
+                const fileName = path.basename(displayToDelete.photoUrl);
+                const filePath = path.join(DISPLAYS_UPLOAD_DIR, fileName);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
             }
         }
 

@@ -108,5 +108,27 @@
     "status": "active",
     "createdBy": "ADMIN-001",
     "createdAt": "2025-12-25T12:50:36.799Z"
+  },
+  {
+    "id": "AD-291225-002",
+    "name": "LG TV+",
+    "companyName": "LG India",
+    "contactNo": "023479823",
+    "mediaUrl": "/uploads/ads/AD-291225-002.mp4",
+    "mediaType": "video",
+    "videoDuration": "10s",
+    "actualDuration": 5.166667,
+    "startDate": "2025-12-29",
+    "endDate": "2026-01-05",
+    "weeks": 1,
+    "numDisplays": 1,
+    "calculatedPrice": 7500,
+    "customPrice": null,
+    "finalPrice": 7500,
+    "discount": 0,
+    "discountPercent": 0,
+    "status": "active",
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-29T09:43:34.207Z"
   }
 ]
