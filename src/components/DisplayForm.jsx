@@ -47,12 +47,22 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                 // Fallback for single photo
                 setPhotoPreviews([`http://localhost:3001${display.photoUrl}`]);
             }
-        } else if (isInstaller) {
-            // Pre-fill installer ID if installer is adding
-            setFormData(prev => ({
-                ...prev,
-                installerId: user.id
-            }));
+        } else {
+            // Reset form for new entry
+            setFormData({
+                gpsCoordinates: '',
+                googleMapsLink: '',
+                address: '',
+                installedDate: new Date().toISOString().split('T')[0],
+                installerId: isInstaller ? user.id : '',
+                status: 'active',
+                impressions: 100000,
+                groupId: ''
+            });
+            // Clear photo states for new entry
+            setPhotoFiles([]);
+            setPhotoPreviews([]);
+            setCurrentPhotoIndex(0);
         }
     }, [isEditing, display, isInstaller, user]);
 

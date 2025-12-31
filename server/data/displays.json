@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "DS-311225-001",
+    "gpsCoordinates": "029348490",
+    "googleMapsLink": "http://localhost:5173/admin/displays",
+    "address": "khasdsad",
+    "photoUrl": "/uploads/displays/DS-311225-001-1.jpg",
+    "photos": [
+      "/uploads/displays/DS-311225-001-1.jpg",
+      "/uploads/displays/DS-311225-001-2.jpg"
+    ],
+    "installedDate": "2025-12-31",
+    "installerId": "INST-001",
+    "installerName": "Mahesh Mer",
+    "status": "active",
+    "impressions": 100000,
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-31T22:06:47.984Z",
+    "groupId": "S1GP-001-002"
+  }
+]

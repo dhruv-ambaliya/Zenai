@@ -8,20 +8,28 @@
           {
             "name": "sub sub gp 2",
             "subgroups": [],
-            "id": "S2GP-001-001-002"
+            "id": "S2GP-001-001-002",
+            "displays": [],
+            "ads": []
           },
           {
             "name": "sub sub gp 3",
             "subgroups": [],
-            "id": "S2GP-001-001-003"
+            "id": "S2GP-001-001-003",
+            "displays": [],
+            "ads": []
           },
           {
             "name": "sub sub gp 1",
             "subgroups": [],
-            "id": "S2GP-001-001-001"
+            "id": "S2GP-001-001-001",
+            "displays": [],
+            "ads": []
           }
         ],
-        "id": "S1GP-001-001"
+        "id": "S1GP-001-001",
+        "displays": [],
+        "ads": []
       },
       {
         "name": "sub gp 2",
@@ -29,22 +37,32 @@
           {
             "name": "sub gp 2 1",
             "subgroups": [],
-            "id": "S2GP-001-002-001"
+            "id": "S2GP-001-002-001",
+            "displays": [],
+            "ads": []
           },
           {
             "name": "sub gp 2 2",
             "subgroups": [],
-            "id": "S2GP-001-002-002"
+            "id": "S2GP-001-002-002",
+            "displays": [],
+            "ads": []
           }
         ],
-        "id": "S1GP-001-002"
+        "id": "S1GP-001-002",
+        "displays": [],
+        "ads": []
       }
     ],
-    "id": "GP-001"
+    "id": "GP-001",
+    "displays": [],
+    "ads": []
   },
   {
     "name": "Test 2",
     "subgroups": [],
-    "id": "GP-002"
+    "id": "GP-002",
+    "displays": [],
+    "ads": []
   }
 ]
