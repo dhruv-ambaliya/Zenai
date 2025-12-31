@@ -47,22 +47,12 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                 // Fallback for single photo
                 setPhotoPreviews([`http://localhost:3001${display.photoUrl}`]);
             }
-        } else {
-            // Reset form for new entry
-            setFormData({
-                gpsCoordinates: '',
-                googleMapsLink: '',
-                address: '',
-                installedDate: new Date().toISOString().split('T')[0],
-                installerId: isInstaller ? user.id : '',
-                status: 'active',
-                impressions: 100000,
-                groupId: ''
-            });
-            // Clear photo states for new entry
-            setPhotoFiles([]);
-            setPhotoPreviews([]);
-            setCurrentPhotoIndex(0);
+        } else if (isInstaller) {
+            // Pre-fill installer ID if installer is adding
+            setFormData(prev => ({
+                ...prev,
+                installerId: user.id
+            }));
         }
     }, [isEditing, display, isInstaller, user]);
 
@@ -145,10 +135,17 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
 
             setUploadProgress(40);
             
+            let response;
             if (isEditing) {
-                await api.updateDisplay(display.id, submitData);
+                response = await api.updateDisplay(display.id, submitData);
             } else {
-                await api.addDisplay(submitData);
+                response = await api.addDisplay(submitData);
+            }
+            
+            console.log('Server response:', response);
+            
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to save display');
             }
             
             setUploadProgress(100);
@@ -156,7 +153,7 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
             onSuccess();
         } catch (error) {
             console.error('Error saving display:', error);
-            alert('Error saving display');
+            alert('Error saving display: ' + error.message);
             setUploadProgress(0);
         } finally {
             setIsSubmitting(false);

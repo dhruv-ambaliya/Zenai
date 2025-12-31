@@ -1,13 +1,35 @@
 [
   {
+    "id": "DS-311225-002",
+    "gpsCoordinates": "21.1702° N, 72.8311° E",
+    "googleMapsLink": "https://www.google.com/maps/place/Surat,+Gujarat/@21.1591204,72.6574741,52050m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3be04e59411d1563:0xfe4558290938b042!8m2!3d21.1702401!4d72.8310607!16zL20vMDFoMWhu?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
+    "address": "kjdnsfkjn",
+    "photoUrl": "/uploads/displays/DS-311225-002-1.jpg",
+    "photos": [
+      "/uploads/displays/DS-311225-002-1.jpg",
+      "/uploads/displays/DS-311225-002-2.jpg",
+      "/uploads/displays/DS-311225-002-3.jpg"
+    ],
+    "installedDate": "2025-12-31",
+    "installerId": "INST-002",
+    "installerName": "Ramesh Sen",
+    "status": "active",
+    "impressions": 100000,
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-31T22:41:11.045Z",
+    "groupId": "GP-001"
+  },
+  {
     "id": "DS-311225-001",
-    "gpsCoordinates": "029348490",
-    "googleMapsLink": "http://localhost:5173/admin/displays",
-    "address": "khasdsad",
+    "gpsCoordinates": "21.1702° N, 72.8311° E",
+    "googleMapsLink": "https://www.google.com/maps/place/Surat,+Gujarat/@21.1591204,72.6574741,52050m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3be04e59411d1563:0xfe4558290938b042!8m2!3d21.1702401!4d72.8310607!16zL20vMDFoMWhu?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
+    "address": "Test address",
     "photoUrl": "/uploads/displays/DS-311225-001-1.jpg",
     "photos": [
       "/uploads/displays/DS-311225-001-1.jpg",
-      "/uploads/displays/DS-311225-001-2.jpg"
+      "/uploads/displays/DS-311225-001-2.jpg",
+      "/uploads/displays/DS-311225-001-3.jpg",
+      "/uploads/displays/DS-311225-001-4.jpg"
     ],
     "installedDate": "2025-12-31",
     "installerId": "INST-001",
@@ -15,7 +37,47 @@
     "status": "active",
     "impressions": 100000,
     "createdBy": "ADMIN-001",
-    "createdAt": "2025-12-31T22:06:47.984Z",
-    "groupId": "S1GP-001-002"
+    "createdAt": "2025-12-31T22:41:56.648Z",
+    "groupId": ""
+  },
+  {
+    "id": "DS-291225-001",
+    "gpsCoordinates": "21.1702° N, 72.8311° E",
+    "googleMapsLink": "https://www.google.com/maps/place/Surat,+Gujarat/@21.1591204,72.6574741,52050m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3be04e59411d1563:0xfe4558290938b042!8m2!3d21.1702401!4d72.8310607!16zL20vMDFoMWhu?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
+    "address": "kjbsd",
+    "photoUrl": "/uploads/displays/DS-291225-001-1.jpg",
+    "photos": [
+      "/uploads/displays/DS-291225-001-1.jpg",
+      "/uploads/displays/DS-291225-001-2.jpg",
+      "/uploads/displays/DS-291225-001-3.jpg",
+      "/uploads/displays/DS-291225-001-4.jpg"
+    ],
+    "installedDate": "2025-12-29",
+    "installerId": "INST-002",
+    "installerName": "Ramesh Sen",
+    "status": "active",
+    "impressions": 100000,
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-31T22:42:39.071Z",
+    "groupId": "S2GP-001-002-002"
+  },
+  {
+    "id": "DS-301225-001",
+    "gpsCoordinates": "21.1702° N, 72.8311° E",
+    "googleMapsLink": "https://www.google.com/maps/place/Surat,+Gujarat/@21.1591204,72.6574741,52050m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3be04e59411d1563:0xfe4558290938b042!8m2!3d21.1702401!4d72.8310607!16zL20vMDFoMWhu?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
+    "address": "kajsd",
+    "photoUrl": "/uploads/displays/DS-301225-001-1.jpg",
+    "photos": [
+      "/uploads/displays/DS-301225-001-1.jpg",
+      "/uploads/displays/DS-301225-001-2.jpg"
+    ],
+    "installedDate": "2025-12-30",
+    "installerId": "INST-003",
+    "installerName": "Chaman chen",
+    "status": "active",
+    "impressions": 100000,
+    "createdBy": "ADMIN-001",
+    "createdAt": "2025-12-31T22:43:30.725Z",
+    "groupId": "GP-002"
   }
 ]

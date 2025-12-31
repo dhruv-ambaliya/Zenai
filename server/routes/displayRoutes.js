@@ -25,8 +25,8 @@ const storage = multer.diskStorage({
         cb(null, DISPLAYS_UPLOAD_DIR);
     },
     filename: function (req, file, cb) {
-        // Will be renamed after ID generation
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+        // Will be renamed after ID generation - use random suffix to ensure uniqueness for multiple files
+        cb(null, file.fieldname + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
     }
 });
 
@@ -55,7 +55,12 @@ router.get('/', async (req, res) => {
 
 // Add a display
 router.post('/', upload.array('photos', 10), async (req, res) => {
+    let uploadedFiles = []; // Track uploaded files for cleanup on error
     try {
+        console.log('Display POST request received');
+        console.log('Files uploaded:', req.files ? req.files.length : 0);
+        console.log('Body:', req.body);
+        
         const displays = await readData(FILE_NAME);
         // Ensure installedDate is present, default to today if not
         const installedDate = req.body.installedDate || new Date().toISOString();
@@ -67,15 +72,26 @@ router.post('/', upload.array('photos', 10), async (req, res) => {
         // Save ALL uploaded images with sequential numbering
         if (req.files && req.files.length > 0) {
             req.files.forEach((file, photoIndex) => {
-                const tempPath = path.join(DISPLAYS_UPLOAD_DIR, file.filename);
-                const ext = path.extname(file.originalname);
-                // Format: DS-221225-001-1, DS-221225-001-2, etc.
-                const imageNumber = photoIndex + 1;
-                const newFilename = `${newId}-${imageNumber}${ext}`;
-                const newPath = path.join(DISPLAYS_UPLOAD_DIR, newFilename);
+                try {
+                    const tempPath = path.join(DISPLAYS_UPLOAD_DIR, file.filename);
+                    const ext = path.extname(file.originalname);
+                    // Format: DS-221225-001-1, DS-221225-001-2, etc.
+                    const imageNumber = photoIndex + 1;
+                    const newFilename = `${newId}-${imageNumber}${ext}`;
+                    const newPath = path.join(DISPLAYS_UPLOAD_DIR, newFilename);
 
-                fs.renameSync(tempPath, newPath);
-                photoUrls.push(`/uploads/displays/${newFilename}`);
+                    if (!fs.existsSync(tempPath)) {
+                        throw new Error(`Uploaded file not found: ${file.filename}`);
+                    }
+
+                    fs.renameSync(tempPath, newPath);
+                    uploadedFiles.push(newPath);
+                    photoUrls.push(`/uploads/displays/${newFilename}`);
+                    console.log(`Renamed file: ${file.filename} -> ${newFilename}`);
+                } catch (fileError) {
+                    console.error(`Error processing file ${photoIndex}:`, fileError);
+                    throw fileError;
+                }
             });
             
             photoUrl = photoUrls[0]; // First image as main thumbnail
@@ -101,8 +117,21 @@ router.post('/', upload.array('photos', 10), async (req, res) => {
 
         displays.push(newDisplay);
         await writeData(FILE_NAME, displays);
+        console.log('Display saved successfully:', newDisplay.id);
         res.json({ success: true, display: newDisplay });
     } catch (error) {
+        console.error('Error in display POST:', error);
+        // Clean up uploaded files on error
+        uploadedFiles.forEach(filePath => {
+            try {
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                    console.log('Cleaned up file:', filePath);
+                }
+            } catch (cleanupError) {
+                console.error('Error cleaning up file:', cleanupError);
+            }
+        });
         res.status(500).json({ success: false, message: error.message });
     }
 });
