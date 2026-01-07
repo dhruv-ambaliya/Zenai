@@ -8,6 +8,10 @@ import { readData, writeData } from '../utils/fileHelper.js';
 import { generateAdId } from '../utils/idGenerator.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { loadSchedules, saveSchedules, pruneExpired, bookEarliest, removeAdBookings, findEarliestStart } from '../utils/scheduleHelper.js';
+
+const DISPLAYS_FILE = 'displays.json';
+const GROUPS_FILE = 'groups.json';
 
 const execPromise = promisify(exec);
 
@@ -108,8 +112,11 @@ const withLiveFields = (ad) => {
     const { endDate } = getDateInfo(ad.startDate, ad.weeks);
     const resolvedEnd = ad.endDate || endDate;
 
-    const status = getLiveStatus(ad.startDate, resolvedEnd);
-    const remainingDays = getLiveRemainingDays(ad.startDate, resolvedEnd);
+    const computedStatus = getLiveStatus(ad.startDate, resolvedEnd);
+    const status = ad.queued ? 'queued' : computedStatus;
+    const remainingDays = status === 'completed' || status === 'queued'
+        ? 0
+        : getLiveRemainingDays(ad.startDate, resolvedEnd);
 
     return {
         ...ad,
@@ -119,10 +126,108 @@ const withLiveFields = (ad) => {
     };
 };
 
+const durationFromTier = (tier) => tier === '10s' ? 10 : 5;
+const normalizeDateStr = (d) => new Date(d).toISOString().split('T')[0];
+const parseBool = (val) => val === true || val === 'true' || val === 1 || val === '1';
+
+const buildGroupIndex = (groups) => {
+    const index = new Map();
+    const walk = (node, parentId = null) => {
+        index.set(node.id, { node, parentId, children: (node.subgroups || []).map(sg => sg.id) });
+        (node.subgroups || []).forEach(sg => walk(sg, node.id));
+    };
+    (groups || []).forEach(g => walk(g, null));
+    return index;
+};
+
+const displayCountsByGroup = (groups, displays) => {
+    const index = buildGroupIndex(groups);
+    const counts = new Map();
+    const bump = (id) => counts.set(id, (counts.get(id) || 0) + 1);
+    (displays || []).forEach(display => {
+        const gid = display.groupId;
+        if (!gid) return;
+        bump(gid);
+        // ancestors
+        let current = gid;
+        while (current && index.has(current)) {
+            const parentId = index.get(current).parentId;
+            if (parentId) bump(parentId);
+            current = parentId;
+        }
+    });
+    return { counts, index };
+};
+
+const collectDescWithDisplays = (rootId, index, counts) => {
+    const out = [];
+    const walk = (id) => {
+        if (!index.has(id)) return;
+        if ((counts.get(id) || 0) > 0) out.push(id);
+        const children = index.get(id).children || [];
+        children.forEach(walk);
+    };
+    walk(rootId);
+    return Array.from(new Set(out));
+};
+
+const expandGroupsToDisplayBearing = (inputIds, index, counts) => {
+    const expanded = new Set();
+    (inputIds || []).forEach(id => {
+        collectDescWithDisplays(id, index, counts).forEach(gid => expanded.add(gid));
+    });
+    return Array.from(expanded);
+};
+
+// Try to activate queued ads whenever schedules free up
+const tryActivateQueuedAds = async (ads, schedules) => {
+    let schedulesChanged = false;
+    let adsChanged = false;
+    const today = new Date();
+
+    for (const ad of ads) {
+        if (!ad.queued || !Array.isArray(ad.requestedGroups) || ad.requestedGroups.length === 0) continue;
+        const weeks = parseInt(ad.weeks) || 1;
+        const durationSeconds = ad.durationSeconds || durationFromTier(ad.videoDuration || '5s');
+        const attempt = bookEarliest(schedules, ad.id, ad.requestedGroups, durationSeconds, weeks, today);
+        if (!attempt.booked) continue;
+
+        ad.startDate = attempt.startDate;
+        ad.endDate = attempt.endDate;
+        ad.queued = false;
+        ad.status = getLiveStatus(attempt.startDate, attempt.endDate);
+        ad.placements = ad.requestedGroups.map(gid => ({
+            groupId: gid,
+            startDate: attempt.startDate,
+            endDate: attempt.endDate,
+            durationSeconds
+        }));
+
+        schedulesChanged = true;
+        adsChanged = true;
+    }
+
+    if (schedulesChanged) await saveSchedules(schedules);
+    return adsChanged;
+};
+
+// Clean expired bookings and auto-activate queued ads
+const syncSchedulesAndAds = async () => {
+    const schedulesRaw = await loadSchedules();
+    const { cleaned, changed } = pruneExpired(schedulesRaw);
+    if (changed) await saveSchedules(cleaned);
+
+    const ads = await readData(FILE_NAME);
+    const activated = await tryActivateQueuedAds(ads, cleaned);
+    if (activated || changed) {
+        await writeData(FILE_NAME, ads);
+    }
+    return ads;
+};
+
 // Get all ads
 router.get('/', async (req, res) => {
-    const ads = await readData(FILE_NAME);
-    // Return with live status/remainingDays without persisting remainingDays
+    const ads = await syncSchedulesAndAds();
     const enriched = ads.map(withLiveFields);
     res.json(enriched);
 });
@@ -131,12 +236,50 @@ router.get('/', async (req, res) => {
 router.post('/', upload.single('media'), async (req, res) => {
     try {
         const ads = await readData(FILE_NAME);
-        // Ensure startDate is present
-        const startDate = req.body.startDate || new Date().toISOString();
-        const newId = await generateAdId(startDate);
+        // Parse group selection (if provided)
+        let groupIds = [];
+        if (Array.isArray(req.body.groupIds)) {
+            groupIds = req.body.groupIds;
+        } else if (typeof req.body.groupIds === 'string' && req.body.groupIds.trim()) {
+            try {
+                const parsed = JSON.parse(req.body.groupIds);
+                if (Array.isArray(parsed)) groupIds = parsed;
+            } catch (e) {
+                groupIds = req.body.groupIds.split(',').map(s => s.trim()).filter(Boolean);
+            }
+        } else if (req.body.groupId) {
+            groupIds = [req.body.groupId];
+        }
+
+        const queueIfFull = parseBool(req.body.queueIfFull) || parseBool(req.body.allowQueue);
+
+        // Expand selection to all descendant groups that actually have displays
+        let expandedGroupIds = [];
+        let totalSelectedDisplays = 0;
+        if (groupIds.length > 0) {
+            const [groups, displays] = await Promise.all([
+                readData(GROUPS_FILE),
+                readData(DISPLAYS_FILE)
+            ]);
+            const { counts, index } = displayCountsByGroup(groups, displays);
+            const missing = groupIds.filter(id => !index.has(id));
+            if (missing.length) {
+                return res.status(400).json({ success: false, message: `Unknown groupIds: ${missing.join(', ')}` });
+            }
+            expandedGroupIds = expandGroupsToDisplayBearing(groupIds, index, counts);
+            if (!expandedGroupIds.length) {
+                return res.status(400).json({ success: false, message: 'Selected groups have no displays in their subtree' });
+            }
+            totalSelectedDisplays = expandedGroupIds.reduce((sum, gid) => sum + (counts.get(gid) || 0), 0);
+        }
+
+        // Ensure startDate placeholder for ID generation
+        const tempStart = req.body.startDate || new Date().toISOString();
+        const newId = await generateAdId(tempStart);
 
         let duration = 5;
         let durationTier = '5s';
+        let durationSeconds = 5;
 
         let finalMediaUrl = '';
         let finalMediaType = 'image';
@@ -163,6 +306,7 @@ router.post('/', upload.single('media'), async (req, res) => {
                 // Determine target duration and crop
                 const targetSeconds = isInFiveSecTier ? 5 : 10;
                 durationTier = targetSeconds === 5 ? '5s' : '10s';
+                durationSeconds = targetSeconds;
 
                 // Crop to exact target length - NO re-encoding, just trim
                 const newFilename = `${newId}.mp4`;
@@ -192,16 +336,18 @@ router.post('/', upload.single('media'), async (req, res) => {
 
                 // Use selected duration
                 durationTier = req.body.videoDuration || '5s';
+                durationSeconds = durationFromTier(durationTier);
             }
         } else {
             // No media provided (shouldn't happen on create)
             durationTier = req.body.videoDuration || '5s';
+            durationSeconds = durationFromTier(durationTier);
         }
 
         // Calculate price
         const baseRate = 5000;
         const weeks = parseInt(req.body.weeks) || 1;
-        const numDisplays = parseInt(req.body.numDisplays) || 1;
+        const numDisplays = totalSelectedDisplays || parseInt(req.body.numDisplays) || 1;
         const multiplier = durationTier === '10s' ? 1.5 : 1;
         const calculatedPrice = baseRate * weeks * numDisplays * multiplier;
 
@@ -211,8 +357,42 @@ router.post('/', upload.single('media'), async (req, res) => {
         const discount = customPrice ? calculatedPrice - customPrice : 0;
         const discountPercent = customPrice ? ((discount / calculatedPrice) * 100).toFixed(2) : 0;
 
-        const { endDate } = getDateInfo(startDate, weeks);
-        const status = getLiveStatus(startDate, endDate);
+        // Slotting logic
+        let startDate = req.body.startDate || new Date().toISOString();
+        let endDate = getDateInfo(startDate, weeks).endDate;
+        let queued = false;
+        let placements = [];
+        let requestedGroups = [];
+
+        if (expandedGroupIds.length > 0) {
+            const schedulesRaw = await loadSchedules();
+            const { cleaned, changed } = pruneExpired(schedulesRaw);
+            if (changed) await saveSchedules(cleaned);
+
+            const attempt = bookEarliest(cleaned, newId, expandedGroupIds, durationSeconds, weeks, new Date());
+
+            if (!attempt.booked) {
+                if (!queueIfFull) {
+                    return res.status(409).json({ success: false, message: 'No available slot for selected groups' });
+                }
+                queued = true;
+                requestedGroups = expandedGroupIds;
+                startDate = '';
+                endDate = '';
+            } else {
+                startDate = attempt.startDate;
+                endDate = attempt.endDate;
+                placements = expandedGroupIds.map(gid => ({
+                    groupId: gid,
+                    startDate: attempt.startDate,
+                    endDate: attempt.endDate,
+                    durationSeconds
+                }));
+                await saveSchedules(attempt.schedules);
+            }
+        }
+
+        const status = queued ? 'queued' : getLiveStatus(startDate, endDate);
 
         const newAd = {
             id: newId,
@@ -233,6 +413,10 @@ router.post('/', upload.single('media'), async (req, res) => {
             discount: discount,
             discountPercent: discountPercent,
             status,
+            queued,
+            placements,
+            requestedGroups,
+            durationSeconds,
             createdBy: req.body.createdBy || 'ADMIN-001',
             createdAt: new Date().toISOString()
         };
@@ -259,9 +443,26 @@ router.put('/:id', upload.single('media'), async (req, res) => {
                 ...req.body
             };
 
+            // Parse group selection
+            let groupIds = [];
+            if (Array.isArray(req.body.groupIds)) {
+                groupIds = req.body.groupIds;
+            } else if (typeof req.body.groupIds === 'string' && req.body.groupIds.trim()) {
+                try {
+                    const parsed = JSON.parse(req.body.groupIds);
+                    if (Array.isArray(parsed)) groupIds = parsed;
+                } catch (e) {
+                    groupIds = req.body.groupIds.split(',').map(s => s.trim()).filter(Boolean);
+                }
+            } else if (req.body.groupId) {
+                groupIds = [req.body.groupId];
+            }
+            const queueIfFull = parseBool(req.body.queueIfFull) || parseBool(req.body.allowQueue) || updatedAd.queued;
+
             // Normalize numeric fields
             updatedAd.weeks = parseInt(updatedAd.weeks) || 1;
             updatedAd.numDisplays = parseInt(updatedAd.numDisplays) || 1;
+            updatedAd.durationSeconds = updatedAd.durationSeconds || durationFromTier(updatedAd.videoDuration || '5s');
 
             if (req.file) {
                 const tempPath = path.join(ADS_UPLOAD_DIR, req.file.filename);
@@ -285,10 +486,69 @@ router.put('/:id', upload.single('media'), async (req, res) => {
                 }
             }
 
-            // Recalculate date info when start date or weeks change
-            if (req.body.startDate !== undefined || req.body.weeks !== undefined || !updatedAd.endDate) {
-                const { endDate } = getDateInfo(updatedAd.startDate, updatedAd.weeks);
-                updatedAd.endDate = endDate;
+            // Slotting logic if groups provided or previously set
+            const targetGroups = groupIds.length > 0
+                ? groupIds
+                : (updatedAd.placements ? updatedAd.placements.map(p => p.groupId) : (updatedAd.requestedGroups || []));
+
+            if (targetGroups.length > 0) {
+                const [groups, displays] = await Promise.all([
+                    readData(GROUPS_FILE),
+                    readData(DISPLAYS_FILE)
+                ]);
+                const { counts, index } = displayCountsByGroup(groups, displays);
+                const missing = targetGroups.filter(id => !index.has(id));
+                if (missing.length) {
+                    return res.status(400).json({ success: false, message: `Unknown groupIds: ${missing.join(', ')}` });
+                }
+                const expandedGroupIds = expandGroupsToDisplayBearing(targetGroups, index, counts);
+                if (!expandedGroupIds.length) {
+                    return res.status(400).json({ success: false, message: 'Selected groups have no displays in their subtree' });
+                }
+
+                // refresh numDisplays from expanded selection
+                updatedAd.numDisplays = expandedGroupIds.reduce((sum, gid) => sum + (counts.get(gid) || 0), 0) || updatedAd.numDisplays;
+
+                let schedules = await loadSchedules();
+                const pruned = pruneExpired(schedules);
+                schedules = pruned.cleaned;
+                if (pruned.changed) await saveSchedules(schedules);
+
+                const removed = removeAdBookings(schedules, id);
+                schedules = removed.cleaned;
+                if (removed.changed) await saveSchedules(schedules);
+
+                const attempt = bookEarliest(schedules, id, expandedGroupIds, updatedAd.durationSeconds, updatedAd.weeks, new Date());
+
+                if (!attempt.booked) {
+                    if (!queueIfFull) {
+                        return res.status(409).json({ success: false, message: 'No available slot for selected groups' });
+                    }
+                    updatedAd.queued = true;
+                    updatedAd.startDate = '';
+                    updatedAd.endDate = '';
+                    updatedAd.placements = [];
+                    updatedAd.requestedGroups = expandedGroupIds;
+                    await saveSchedules(schedules);
+                } else {
+                    updatedAd.queued = false;
+                    updatedAd.startDate = attempt.startDate;
+                    updatedAd.endDate = attempt.endDate;
+                    updatedAd.requestedGroups = expandedGroupIds;
+                    updatedAd.placements = expandedGroupIds.map(gid => ({
+                        groupId: gid,
+                        startDate: attempt.startDate,
+                        endDate: attempt.endDate,
+                        durationSeconds: updatedAd.durationSeconds
+                    }));
+                    await saveSchedules(attempt.schedules);
+                }
+            } else {
+                // Recalculate date info when start date or weeks change (legacy/manual)
+                if (req.body.startDate !== undefined || req.body.weeks !== undefined || !updatedAd.endDate) {
+                    const { endDate } = getDateInfo(updatedAd.startDate, updatedAd.weeks);
+                    updatedAd.endDate = endDate;
+                }
             }
 
             // Recalculate price if relevant fields changed
@@ -338,6 +598,13 @@ router.delete('/:id', async (req, res) => {
     ads = ads.filter(a => a.id !== id);
 
     if (ads.length < initialLength) {
+        // Remove bookings from schedules
+        const schedules = await loadSchedules();
+        const cleaned = removeAdBookings(schedules, id);
+        if (cleaned.changed) {
+            await saveSchedules(cleaned.cleaned);
+        }
+
         // Delete the media file if it exists
         if (adToDelete && adToDelete.mediaUrl) {
             const fileName = path.basename(adToDelete.mediaUrl);

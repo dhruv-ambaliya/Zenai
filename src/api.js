@@ -63,6 +63,25 @@ export const api = {
         return response.json();
     },
 
+    // Slots
+    slotsAvailability: async (payload) => {
+        const response = await fetch(`${API_BASE_URL}/slots/availability`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        return response.json();
+    },
+    slotsNext: async (params) => {
+        const url = new URL(`${API_BASE_URL}/slots/next`);
+        if (params?.groupIds) url.searchParams.set('groupIds', JSON.stringify(params.groupIds));
+        if (params?.durationSeconds) url.searchParams.set('durationSeconds', params.durationSeconds);
+        if (params?.weeks) url.searchParams.set('weeks', params.weeks);
+        if (params?.startFrom) url.searchParams.set('startFrom', params.startFrom);
+        const response = await fetch(url.toString());
+        return response.json();
+    },
+
     // Groups
     getGroups: async () => {
         const response = await fetch(`${API_BASE_URL}/groups`);

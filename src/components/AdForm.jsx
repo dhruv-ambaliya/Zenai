@@ -33,6 +33,16 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
+    const [groups, setGroups] = useState([]);
+    const [displays, setDisplays] = useState([]);
+    const [groupOptions, setGroupOptions] = useState([]);
+    const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+    const [effectiveGroupIds, setEffectiveGroupIds] = useState([]);
+    const [totalSelectedDisplays, setTotalSelectedDisplays] = useState(0);
+    const [availability, setAvailability] = useState(null);
+    const [queueIfFull, setQueueIfFull] = useState(false);
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
+
     useEffect(() => {
         if (isEditing && ad) {
             setFormData({
@@ -56,13 +66,57 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
                 setMediaPreview(`http://localhost:3001${ad.mediaUrl}`);
                 setMediaType(ad.mediaType);
             }
+
+            const preselected = ad.placements?.length
+                ? ad.placements.map(p => p.groupId)
+                : (ad.requestedGroups || []);
+            if (preselected && preselected.length) {
+                setSelectedGroupIds(preselected);
+            }
+
+            if (ad.queued) {
+                setQueueIfFull(true);
+            }
         }
     }, [isEditing, ad]);
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const [g, d] = await Promise.all([api.getGroups(), api.getDisplays()]);
+                setGroups(g || []);
+                setDisplays(d || []);
+            } catch (err) {
+                console.error('Error loading groups/displays', err);
+            }
+        };
+        load();
+    }, []);
 
     useEffect(() => {
         calculatePrice();
         calculateEndDateAndDays();
     }, [formData.weeks, formData.numDisplays, formData.videoDuration, formData.customPrice, formData.startDate]);
+
+    useEffect(() => {
+        if (!groups.length) return;
+        const index = buildGroupIndex(groups);
+        const counts = computeDisplayCounts(index, displays);
+        const opts = flattenOptions(index, counts);
+        setGroupOptions(opts);
+
+        // Effective selection includes descendants with displays
+        const effective = Array.from(new Set(selectedGroupIds.flatMap(id => collectDescWithDisplays(id, index, counts))));
+        setEffectiveGroupIds(effective);
+
+        // Update total displays for effective selection
+        const total = effective.reduce((sum, gid) => sum + (counts.get(gid) || 0), 0);
+        setTotalSelectedDisplays(total);
+
+        if (total > 0) {
+            setFormData(prev => ({ ...prev, numDisplays: total }));
+        }
+    }, [groups, displays, selectedGroupIds]);
 
     const calculatePrice = () => {
         const baseRate = 5000;
@@ -82,6 +136,59 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
             discount,
             discountPercent
         });
+    };
+
+    const buildGroupIndex = (list) => {
+        const index = new Map();
+        const walk = (node, parentId = null, path = []) => {
+            const currentPath = [...path, node.name];
+            index.set(node.id, { node, parentId, path: currentPath });
+            (node.subgroups || []).forEach(sg => walk(sg, node.id, currentPath));
+        };
+        (list || []).forEach(g => walk(g, null, []));
+        return index;
+    };
+
+    const computeDisplayCounts = (index, displaysList) => {
+        const counts = new Map();
+        const bump = (id) => counts.set(id, (counts.get(id) || 0) + 1);
+
+        (displaysList || []).forEach(d => {
+            const gid = d.groupId;
+            if (!gid || !index.has(gid)) return;
+            let current = gid;
+            while (current) {
+                bump(current);
+                const parent = index.get(current)?.parentId;
+                current = parent;
+            }
+        });
+        return counts;
+    };
+
+    const flattenOptions = (index, counts) => {
+        const opts = [];
+        for (const [id, info] of index.entries()) {
+            const level = info.path.length - 1;
+            const label = info.path.join(' / ');
+            const displayCount = counts.get(id) || 0;
+            if (displayCount > 0) {
+                opts.push({ id, label, level, displayCount });
+            }
+        }
+        return opts.sort((a, b) => a.label.localeCompare(b.label));
+    };
+
+    const collectDescWithDisplays = (rootId, index, counts) => {
+        const out = [];
+        const walk = (id) => {
+            if (!index.has(id)) return;
+            if ((counts.get(id) || 0) > 0) out.push(id);
+            const children = index.get(id).children || [];
+            children.forEach(walk);
+        };
+        walk(rootId);
+        return Array.from(new Set(out));
     };
 
     const getDateInfo = (startDateValue, weeksValue) => {
@@ -107,6 +214,50 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
     const calculateEndDateAndDays = () => {
         const info = getDateInfo(formData.startDate, formData.weeks);
         setDateInfo(info);
+    };
+
+    const toggleGroupSelection = (groupId) => {
+        setAvailability(null);
+        setSelectedGroupIds(prev => prev.includes(groupId)
+            ? prev.filter(id => id !== groupId)
+            : [...prev, groupId]);
+    };
+
+    const handleAvailabilityCheck = async () => {
+        if (!mediaPreview && !isEditing) {
+            alert('Upload media first to lock duration.');
+            return;
+        }
+        if (!effectiveGroupIds.length) {
+            alert('Select at least one group with displays.');
+            return;
+        }
+        try {
+            setCheckingAvailability(true);
+            const durationSeconds = formData.videoDuration === '10s' ? 10 : 5;
+            const payload = {
+                groupIds: effectiveGroupIds,
+                durationSeconds,
+                weeks: formData.weeks,
+                startFrom: new Date().toISOString().split('T')[0]
+            };
+            const resp = await api.slotsAvailability(payload);
+            if (!resp?.success) {
+                setAvailability(null);
+                alert(resp?.message || 'No availability response');
+                return;
+            }
+            setAvailability(resp);
+            if (resp.earliestStartDate) {
+                setFormData(prev => ({ ...prev, startDate: resp.earliestStartDate }));
+                setDateInfo(getDateInfo(resp.earliestStartDate, formData.weeks));
+            }
+        } catch (err) {
+            console.error('Availability error', err);
+            alert(err.message || 'Error checking availability');
+        } finally {
+            setCheckingAvailability(false);
+        }
     };
 
     const handlePhoneChange = (e) => {
@@ -164,6 +315,16 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
             return;
         }
 
+        if (!effectiveGroupIds.length) {
+            alert('Select at least one group');
+            return;
+        }
+
+        if (!queueIfFull && availability && !availability.fitsNow && !availability.earliestStartDate) {
+            alert('No slot available and queuing is off. Enable queue or pick different groups.');
+            return;
+        }
+
         try {
             setIsSubmitting(true);
             setUploadProgress(10);
@@ -174,9 +335,12 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
             submitData.append('companyName', formData.companyName);
             submitData.append('contactNo', formData.contactNo);
             submitData.append('videoDuration', formData.videoDuration);
-            submitData.append('startDate', formData.startDate);
+            // Start date is controlled by slot availability
+            submitData.append('startDate', formData.startDate || '');
             submitData.append('weeks', formData.weeks);
-            submitData.append('numDisplays', formData.numDisplays);
+            submitData.append('numDisplays', totalSelectedDisplays || formData.numDisplays);
+            submitData.append('groupIds', JSON.stringify(effectiveGroupIds));
+            submitData.append('queueIfFull', queueIfFull);
 
             if (formData.customPrice !== null) {
                 submitData.append('customPrice', formData.customPrice);
@@ -304,9 +468,9 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
                                     <input
                                         type="date"
                                         value={formData.startDate}
-                                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        required
+                                        readOnly
+                                        disabled
+                                        className="readonly-input"
                                     />
                                 </div>
                                 <div className="form-group">
@@ -315,7 +479,11 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
                                         type="number"
                                         min="1"
                                         value={formData.weeks}
-                                        onChange={(e) => setFormData({ ...formData, weeks: parseInt(e.target.value) })}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            setFormData({ ...formData, weeks: val });
+                                            setAvailability(null);
+                                        }}
                                         required
                                     />
                                 </div>
@@ -350,22 +518,74 @@ function AdForm({ ad, isEditing, onClose, onSuccess, user }) {
                                     <input
                                         type="number"
                                         min="1"
-                                        value={formData.numDisplays}
-                                        onChange={(e) => setFormData({ ...formData, numDisplays: parseInt(e.target.value) })}
-                                        required
+                                        value={totalSelectedDisplays || formData.numDisplays}
+                                        readOnly
+                                        disabled
+                                        className="readonly-input"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Video Duration</label>
                                     <select
                                         value={formData.videoDuration}
-                                        onChange={(e) => setFormData({ ...formData, videoDuration: e.target.value })}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, videoDuration: e.target.value });
+                                            setAvailability(null);
+                                        }}
                                         disabled={mediaType === 'video'}
                                     >
                                         <option value="5s">5s</option>
                                         <option value="10s">10s</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div className="form-section">
+                                <div className="section-header">
+                                    <h4>Slot Selection</h4>
+                                    <span className="muted">Upload media first to lock duration</span>
+                                </div>
+                                <div className="group-selector">
+                                    {groupOptions.length === 0 && (
+                                        <p className="muted">No groups available</p>
+                                    )}
+                                    {groupOptions.map(opt => (
+                                        <label key={opt.id} className="group-option" style={{ marginLeft: `${opt.level * 12}px` }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedGroupIds.includes(opt.id)}
+                                                onChange={() => toggleGroupSelection(opt.id)}
+                                            />
+                                            <span className="group-label">{opt.label}</span>
+                                            <span className="group-meta">{opt.displayCount} displays</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="slot-actions">
+                                    <button type="button" className="btn-secondary" onClick={handleAvailabilityCheck} disabled={checkingAvailability}>
+                                        {checkingAvailability ? 'Checking...' : 'Check Availability'}
+                                    </button>
+                                    <label className="inline-label">
+                                        <input type="checkbox" checked={queueIfFull} onChange={(e) => setQueueIfFull(e.target.checked)} />
+                                        Queue if no current slot
+                                    </label>
+                                    <div className="inline-label muted">Selected displays: {totalSelectedDisplays}</div>
+                                </div>
+                                {availability && (
+                                    <div className="availability-panel">
+                                        <div>Earliest start: {availability.earliestStartDate || 'N/A'}</div>
+                                        <div>Status: {availability.fitsNow ? 'Fits now' : 'Will auto-queue for earliest slot'}</div>
+                                        <div className="availability-groups">
+                                            {availability.groups?.map(g => (
+                                                <div key={g.groupId} className="availability-row">
+                                                    <span>{g.groupId}</span>
+                                                    <span>{g.totalDisplays || 0} displays</span>
+                                                    <span>Free secs/week: {g.freeSecondsByWeek?.join(', ') || 'n/a'}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="price-display">

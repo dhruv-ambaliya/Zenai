@@ -16,12 +16,13 @@ function Navbar({ user, onLogout }) {
     };
 
     const navLinks = user?.role === 'admin' 
-        ? [
-            { path: '/admin', label: 'Dashboard', icon: <FiHome /> },
-            { path: '/admin/displays', label: 'Displays', icon: <FiMonitor /> },
-            { path: '/admin/ads', label: 'Ads', icon: <FiFileText /> },
-            { path: '/admin/installers', label: 'Installers', icon: <FiUsers /> },
-          ]
+                ? [
+                        { path: '/admin', label: 'Dashboard', icon: <FiHome /> },
+                        { path: '/admin/displays', label: 'Displays', icon: <FiMonitor /> },
+                        { path: '/admin/ads', label: 'Ads', icon: <FiFileText /> },
+                        { path: '/admin/slots', label: 'Slots', icon: <FiMonitor /> },
+                        { path: '/admin/installers', label: 'Installers', icon: <FiUsers /> },
+                    ]
         : [
             { path: '/installer', label: 'My Displays', icon: <FiMonitor /> },
           ];

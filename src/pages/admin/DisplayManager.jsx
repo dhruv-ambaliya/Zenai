@@ -116,8 +116,8 @@ function DisplayManager() {
                 return new Date(b.installedDate) - new Date(a.installedDate);
             } else if (sortBy === 'id') {
                 return a.id.localeCompare(b.id);
-            } else if (sortBy === 'impressions') {
-                return (b.impressions || 0) - (a.impressions || 0);
+            } else if (sortBy === 'avgActualFootfall') {
+                return (b.avgActualFootfall || 0) - (a.avgActualFootfall || 0);
             }
             return 0;
         });
@@ -306,7 +306,7 @@ function DisplayManager() {
                         <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                             <option value="date">Sort by Date</option>
                             <option value="id">Sort by ID</option>
-                            <option value="impressions">Sort by Impressions</option>
+                            <option value="avgActualFootfall">Sort by Avg Actual Footfall</option>
                         </select>
 
                         <div className="view-toggle">
@@ -567,7 +567,7 @@ function DisplayManager() {
                                     <strong>Date:</strong> {new Date(currentDisplay.installedDate).toLocaleDateString()}
                                 </div>
                                 <div className="detail-row">
-                                    <strong>Impressions:</strong> {(currentDisplay.impressions || 0).toLocaleString()}
+                                    <strong>Avg Actual Footfall:</strong> {(currentDisplay.avgActualFootfall || 0).toLocaleString()}
                                 </div>
                                 <div className="detail-row">
                                     <strong>Group:</strong> {currentDisplay.groupId || 'None'}

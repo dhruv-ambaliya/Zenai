@@ -1,0 +1,50 @@
+[
+  {
+    "groupId": "GP-001",
+    "bookings": []
+  },
+  {
+    "groupId": "GP-002",
+    "bookings": [
+      {
+        "adId": "AD-030126-001",
+        "startDate": "2026-01-02",
+        "endDate": "2026-02-06",
+        "durationSeconds": 10
+      },
+      {
+        "adId": "AD-020126-002",
+        "startDate": "2026-01-02",
+        "endDate": "2026-02-13",
+        "durationSeconds": 5
+      }
+    ]
+  },
+  {
+    "groupId": "S2GP-001-002-002",
+    "bookings": [
+      {
+        "adId": "AD-020126-001",
+        "startDate": "2026-01-02",
+        "endDate": "2026-01-30",
+        "durationSeconds": 5
+      },
+      {
+        "adId": "AD-030126-001",
+        "startDate": "2026-01-02",
+        "endDate": "2026-02-06",
+        "durationSeconds": 10
+      },
+      {
+        "adId": "AD-020126-002",
+        "startDate": "2026-01-02",
+        "endDate": "2026-02-13",
+        "durationSeconds": 5
+      }
+    ]
+  },
+  {
+    "groupId": "S1GP-001-002",
+    "bookings": []
+  }
+]

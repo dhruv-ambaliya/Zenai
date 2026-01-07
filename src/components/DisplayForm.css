@@ -239,6 +239,47 @@
     font-weight: 500;
 }
 
+/* Footfall Display Styling */
+.footfall-display {
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #4caf50;
+}
+
+.footfall-display label {
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.footfall-value {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #1b5e20;
+    text-align: center;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Coming Soon Notice */
+.coming-soon-notice {
+    background: #fff3e0;
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px dashed #ff9800;
+    text-align: center;
+}
+
+.coming-soon-notice p {
+    margin: 0;
+    font-size: 1.1em;
+    color: #e65100;
+    font-weight: 600;
+}
+
 /* Modal styling for Display Form */
 .modal-overlay {
     position: fixed;

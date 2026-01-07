@@ -36,6 +36,7 @@ import adRoutes from './routes/adRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import slotRoutes from './routes/slotRoutes.js';
 
 app.use('/api', authRoutes);
 app.use('/api/displays', displayRoutes);
@@ -43,6 +44,7 @@ app.use('/api/ads', adRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/slots', slotRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

@@ -249,7 +249,7 @@ function InstallerDashboard() {
                 </div>
             )}
 
-            {/* View Modal without impressions/installer/group */}
+            {/* View Modal without avgActualFootfall/installer/group */}
             {showViewModal && editingDisplay && (
                 <div className="modal-overlay" onClick={() => { setShowViewModal(false); setEditingDisplay(null); }}>
                     <div className="modal-content details-view" onClick={(e) => e.stopPropagation()}>

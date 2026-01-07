@@ -15,28 +15,28 @@ function Home() {
         totalDisplays: 0,
         totalAds: 0,
         totalRevenue: 0,
-        totalImpressions: 0
+        totalAvgActualFootfall: 0
     });
 
     const [chartFilters, setChartFilters] = useState({
         displays: 'year',
         ads: 'year',
         revenue: 'year',
-        impressions: 'year'
+        avgActualFootfall: 'year'
     });
 
     const [chartData, setChartData] = useState({
         displays: [],
         ads: [],
         revenue: [],
-        impressions: []
+        avgActualFootfall: []
     });
 
     const [chartTotals, setChartTotals] = useState({
         displays: { total: 0, last: 0 },
         ads: { total: 0, last: 0 },
         revenue: { total: 0, last: 0 },
-        impressions: { total: 0, last: 0 }
+        avgActualFootfall: { total: 0, last: 0 }
     });
 
     const [showModal, setShowModal] = useState(null);
@@ -60,29 +60,29 @@ function Home() {
             ]);
 
             const adsWithPrice = ads.map(a => ({ ...a, finalPrice: parseFloat(a.finalPrice) || 0 }));
-            const displaysWithImp = displays.map(d => ({ ...d, impressions: parseInt(d.impressions) || 0 }));
+            const displaysWithFootfall = displays.map(d => ({ ...d, avgActualFootfall: parseInt(d.avgActualFootfall) || 0 }));
 
             const totalRevenue = adsWithPrice.reduce((sum, ad) => sum + ad.finalPrice, 0);
-            const totalImpressions = displaysWithImp.reduce((sum, d) => sum + d.impressions, 0);
+            const totalAvgActualFootfall = displaysWithFootfall.reduce((sum, d) => sum + d.avgActualFootfall, 0);
 
             setStats({
                 totalDisplays: displays.length,
                 totalAds: ads.length,
                 totalRevenue,
-                totalImpressions
+                totalAvgActualFootfall
             });
 
             // Generate separated chart data
             const displayData = generateSeriesData(displays, 'installedDate', chartFilters.displays);
             const adData = generateSeriesData(ads, 'createdAt', chartFilters.ads);
             const revenueData = generateSeriesData(adsWithPrice, 'createdAt', chartFilters.revenue, 'finalPrice');
-            const impressionData = generateCumulativeSeriesData(displaysWithImp, 'installedDate', chartFilters.impressions, 'impressions');
+            const footfallData = generateCumulativeSeriesData(displaysWithFootfall, 'installedDate', chartFilters.avgActualFootfall, 'avgActualFootfall');
 
             setChartData({
                 displays: displayData,
                 ads: adData,
                 revenue: revenueData,
-                impressions: impressionData
+                avgActualFootfall: footfallData
             });
 
             // Calculate totals and last values for charts
@@ -90,7 +90,7 @@ function Home() {
                 displays: calculateChartStats(displayData),
                 ads: calculateChartStats(adData),
                 revenue: calculateChartStats(revenueData),
-                impressions: calculateChartStats(impressionData)
+                avgActualFootfall: calculateChartStats(footfallData)
             });
 
         } catch (error) {
@@ -286,12 +286,12 @@ function Home() {
             }
         }
 
-        // Calculate cumulative impressions for each period
+        // Calculate cumulative footfall for each period
         const result = [];
         let cumulative = 0;
 
         periods.forEach(period => {
-            // Add impressions from all displays that were installed up to this period
+            // Add footfall from all displays that were installed up to this period
             data.forEach(item => {
                 const itemDate = new Date(item[dateField]);
                 const periodDate = period.date;
@@ -489,8 +489,8 @@ function Home() {
                 />
                 <StatCard
                     icon={<FiEye />}
-                    title="Total Impressions"
-                    value={(stats.totalImpressions / 100000).toFixed(1)}
+                    title="Total Avg Actual Footfall"
+                    value={(stats.totalAvgActualFootfall / 100000).toFixed(1)}
                     color="#e74c3c"
                     suffix=" L"
                 />
@@ -523,12 +523,12 @@ function Home() {
                     statsVal={chartTotals.revenue}
                 />
                 <ChartWidget
-                    title="Impressions Trend"
-                    data={chartData.impressions}
+                    title="Avg Actual Footfall Trend"
+                    data={chartData.avgActualFootfall}
                     color="#e74c3c"
-                    filterKey="impressions"
-                    filterValue={chartFilters.impressions}
-                    statsVal={chartTotals.impressions}
+                    filterKey="avgActualFootfall"
+                    filterValue={chartFilters.avgActualFootfall}
+                    statsVal={chartTotals.avgActualFootfall}
                 />
             </div>
 

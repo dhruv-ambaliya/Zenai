@@ -5,6 +5,7 @@ import Home from './admin/Home';
 import DisplayManager from './admin/DisplayManager';
 import AdManager from './admin/AdManager';
 import InstallerManager from './admin/InstallerManager';
+import SlotMonitor from './admin/SlotMonitor';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -20,6 +21,7 @@ function AdminDashboard() {
                     <Route path="displays" element={<DisplayManager />} />
                     <Route path="ads" element={<AdManager />} />
                     <Route path="installers" element={<InstallerManager />} />
+                    <Route path="slots" element={<SlotMonitor />} />
                 </Routes>
             </main>
         </div>

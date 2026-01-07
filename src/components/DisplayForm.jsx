@@ -16,8 +16,11 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
         installedDate: new Date().toISOString().split('T')[0],
         installerId: '',
         status: 'active',
-        impressions: 100000,
-        groupId: ''
+        groupId: '',
+        propertyType: 'commercial',
+        propertyName: '',
+        numberOfShops: '',
+        avgActualFootfall: '',
     });
 
     const [photoFile, setPhotoFile] = useState(null);
@@ -36,8 +39,11 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                 installedDate: display.installedDate,
                 installerId: display.installerId,
                 status: display.status,
-                impressions: display.impressions || 100000,
-                groupId: display.groupId || ''
+                groupId: display.groupId || '',
+                propertyType: display.propertyType || 'commercial',
+                propertyName: display.propertyName || '',
+                numberOfShops: display.numberOfShops || '',
+                avgActualFootfall: display.avgActualFootfall || ''
             });
             // Load existing photos for gallery
             if (display.photos && Array.isArray(display.photos)) {
@@ -112,13 +118,23 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
             submitData.append('installerId', formData.installerId);
             submitData.append('status', formData.status);
 
-            // Installer form should not edit impressions or group
-            if (isInstaller) {
-                submitData.append('impressions', 100000);
-                submitData.append('groupId', '');
+            // Calculate and append property data
+            submitData.append('propertyType', formData.propertyType);
+            if (formData.propertyType === 'commercial') {
+                submitData.append('propertyName', formData.propertyName);
+                submitData.append('numberOfShops', formData.numberOfShops);
+                // Calculate Avg Actual Footfall
+                const avgActualFootfall = calculateAvgActualFootfall(formData.numberOfShops);
+                submitData.append('avgActualFootfall', avgActualFootfall);
             } else {
-                submitData.append('impressions', formData.impressions);
+                submitData.append('avgActualFootfall', '0'); // Default for non-commercial
+            }
+
+            // Group can only be set by admin
+            if (!isInstaller) {
                 submitData.append('groupId', formData.groupId);
+            } else {
+                submitData.append('groupId', '');
             }
 
             // Add multiple photos
@@ -159,7 +175,31 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
             setIsSubmitting(false);
         }
     };
+    // Calculate Avg Actual Footfall based on formula
+    const calculateAvgActualFootfall = (numShops) => {
+        const shops = parseFloat(numShops) || 0;
+        if (shops === 0) return 0;
 
+        // Step 1: Repetitive footfall = Num of shops * 2.28
+        const repetitiveFootfall = shops * 2.28;
+
+        // Step 2: Number of local SMEs = Num of shops * 0.75
+        const numberOfLocalSMEs = shops * 0.75;
+
+        // Step 3: Expected new footfall = Repetitive footfall + 0
+        const expectedNewFootfall = repetitiveFootfall + 0;
+
+        // Step 4: Total min footfall = Number of local SMEs + Expected new footfall
+        const totalMinFootfall = numberOfLocalSMEs + expectedNewFootfall;
+
+        // Step 5: Total maximum footfall = Total min footfall * 2
+        const totalMaximumFootfall = totalMinFootfall * 2;
+
+        // Step 6: Avg actual footfall = Average of all four values
+        const avgActualFootfall = (repetitiveFootfall + expectedNewFootfall + totalMinFootfall + totalMaximumFootfall) / 4;
+
+        return Math.round(avgActualFootfall);
+    };
     // Recursive group options renderer
     const renderGroupOptions = (groupList, level = 0) => {
         return groupList.map(group => (
@@ -330,14 +370,58 @@ function DisplayForm({ display, isEditing, onClose, onSuccess, user, isInstaller
                                 </div>
                             )}
 
-                            {!isInstaller && (
-                                <div className="form-group">
-                                    <label>Impressions</label>
-                                    <input
-                                        type="number"
-                                        value={formData.impressions}
-                                        onChange={(e) => setFormData({ ...formData, impressions: parseInt(e.target.value) })}
-                                    />
+                            <div className="form-group">
+                                <label>Property Type *</label>
+                                <select
+                                    value={formData.propertyType}
+                                    onChange={(e) => setFormData({ ...formData, propertyType: e.target.value, propertyName: '', numberOfShops: '' })}
+                                    required
+                                >
+                                    <option value="commercial">Commercial</option>
+                                    <option value="public">Public (Coming Soon)</option>
+                                    <option value="residential">Residential (Coming Soon)</option>
+                                </select>
+                            </div>
+
+                            {formData.propertyType === 'commercial' && (
+                                <>
+                                    <div className="form-group">
+                                        <label>Property Name *</label>
+                                        <input
+                                            type="text"
+                                            value={formData.propertyName}
+                                            onChange={(e) => setFormData({ ...formData, propertyName: e.target.value })}
+                                            placeholder="Enter property name"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>Number of Shops *</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={formData.numberOfShops}
+                                            onChange={(e) => setFormData({ ...formData, numberOfShops: e.target.value })}
+                                            placeholder="Enter number of shops"
+                                            required
+                                        />
+                                    </div>
+
+                                    {formData.numberOfShops && (
+                                        <div className="form-group footfall-display">
+                                            <label>Avg Actual Footfall (Calculated)</label>
+                                            <div className="footfall-value">
+                                                {calculateAvgActualFootfall(formData.numberOfShops).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {(formData.propertyType === 'public' || formData.propertyType === 'residential') && (
+                                <div className="form-group coming-soon-notice">
+                                    <p>🚧 Coming Soon</p>
                                 </div>
                             )}
                         </div>

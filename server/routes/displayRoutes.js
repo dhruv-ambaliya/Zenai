@@ -109,10 +109,13 @@ router.post('/', upload.array('photos', 10), async (req, res) => {
             installerId: req.body.installerId,
             installerName: req.body.installerName,
             status: req.body.status || 'active',
-            impressions: parseInt(req.body.impressions) || 100000,
             createdBy: req.body.createdBy || 'ADMIN-001',
             createdAt: new Date().toISOString(),
-            groupId: req.body.groupId || ''
+            groupId: req.body.groupId || '',
+            propertyType: req.body.propertyType || 'commercial',
+            propertyName: req.body.propertyName || '',
+            numberOfShops: req.body.numberOfShops || '',
+            avgActualFootfall: parseInt(req.body.avgActualFootfall) || 0
         };
 
         displays.push(newDisplay);
@@ -147,7 +150,10 @@ router.put('/:id', upload.array('photos', 10), async (req, res) => {
             const updatedDisplay = {
                 ...displays[index],
                 ...req.body,
-                impressions: req.body.impressions ? parseInt(req.body.impressions) : displays[index].impressions
+                propertyType: req.body.propertyType || displays[index].propertyType || 'commercial',
+                propertyName: req.body.propertyName || displays[index].propertyName || '',
+                numberOfShops: req.body.numberOfShops || displays[index].numberOfShops || '',
+                avgActualFootfall: req.body.avgActualFootfall ? parseInt(req.body.avgActualFootfall) : displays[index].avgActualFootfall
             };
 
             if (req.files && req.files.length > 0) {
